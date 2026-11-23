@@ -4,7 +4,7 @@
      saat offline, aplikasi menyimpan absen di antrean dan mengirimnya belakangan).
    Naikkan VERSI setiap kali index.html diperbarui agar HP mengambil versi terbaru.
    Created by AN1MO LAB SQUAD */
-const VERSI = 'hadirkuy-v3.1.0';
+const VERSI = 'hadirkuy-v3.1.2';
 const INTI = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 const CDN = [
   'https://unpkg.com/@phosphor-icons/web@2.1.1',

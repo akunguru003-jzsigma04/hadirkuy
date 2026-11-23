@@ -520,6 +520,14 @@ tr.klik:hover td{background:#effefb}
 .lq-jenis{background:linear-gradient(180deg,#5eead4,#14b8a6);box-shadow:0 14px 26px -14px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.5)}
 .lq-jenis.pulang{background:linear-gradient(180deg,#fcd34d,#f59e0b)}
 
+/* Diagnosa koneksi */
+.diag{margin-top:12px;background:rgba(255,255,255,.92);border:var(--tepi);border-radius:20px;padding:12px 14px;box-shadow:var(--bayang);display:flex;flex-direction:column;gap:10px;text-align:left}
+.diag-baris{display:flex;gap:10px;align-items:flex-start;font-size:13px}
+.diag-baris>span{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;font-size:12px}
+.diag-baris.ok>span{background:#dcfce7;color:#166534}.diag-baris.gagal>span{background:#fee2e2;color:#991b1b}.diag-baris.tunggu>span{background:#f1f5f9;color:#64748b}
+.diag-baris p{font-size:12px;color:var(--s600);margin-top:2px;line-height:1.5}
+.diag-baris code{font-size:11px;background:#f1f5f9;padding:1px 5px;border-radius:6px;word-break:break-all}
+
 /* Foto profil */
 .foto-besar{width:112px;height:112px;margin:0 auto;font-size:40px}
 .foto-aksi{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
@@ -551,9 +559,15 @@ const KONFIG = {
   KREDIT: 'Created by AN1MO LAB SQUAD',
 };
 
-const sb = (window.supabase && !KONFIG.SUPABASE_URL.includes('PROJECT-ANDA'))
-  ? window.supabase.createClient(KONFIG.SUPABASE_URL, KONFIG.SUPABASE_ANON_KEY, { auth: { persistSession: false } })
-  : null;
+// Rapikan alamat: tanpa spasi, tanpa "/" di akhir, tanpa "/rest/v1"
+const SB_URL = String(KONFIG.SUPABASE_URL || '').trim().replace(/\/+$/, '').replace(/\/rest\/v1$/i, '');
+const SB_KEY = String(KONFIG.SUPABASE_ANON_KEY || '').trim();
+let sbGalatAwal = '';
+const sb = (() => {
+  if (!window.supabase || SB_URL.includes('PROJECT-ANDA')) return null;
+  try { return window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } }); }
+  catch (e) { sbGalatAwal = e.message; return null; }
+})();
 
 /* ---------- Utilitas ---------- */
 const $ = (s, el = document) => el.querySelector(s);
@@ -718,23 +732,30 @@ function toast(pesan, gagal = false) {
   setTimeout(() => t.remove(), 3800);
 }
 
-function galatJaringan() {
-  const e = new Error('Tidak ada koneksi internet. Periksa sinyal lalu coba lagi.');
-  e.jaringan = true; return e;
+function galatJaringan(teknis = '') {
+  const offline = navigator.onLine === false;
+  const e = new Error(offline
+    ? 'Tidak ada koneksi internet. Periksa sinyal lalu coba lagi.'
+    : 'Server tidak dapat dihubungi. Internet Anda tersambung, tetapi server HadirKuy tidak merespons. Tekan "Cek koneksi server" untuk melihat penyebabnya.');
+  e.jaringan = true; e.teknis = teknis; return e;
 }
 async function rpc(fn, args = {}, pakaiToken = true) {
   let hasil;
   try { hasil = await sb.rpc(fn, pakaiToken ? { p_token: S.token, ...args } : args); }
-  catch (e) { throw galatJaringan(); }
+  catch (e) { throw galatJaringan(e && e.message); }
   const { data, error } = hasil;
   if (error) {
     const msg = error.message || 'Terjadi kesalahan. Coba lagi.';
+    if (error.code === 'PGRST202' || /Could not find the function/i.test(msg))
+      throw new Error('Database belum disiapkan atau belum versi terbaru. Jalankan file hadirkuy_supabase.sql di Supabase > SQL Editor.');
+    if (/Invalid API key|No API key|apikey|JWS|JWT/i.test(msg) && !/SESI/.test(msg))
+      throw new Error('Kunci server salah. Periksa SUPABASE_ANON_KEY di index.html (Supabase > Project Settings > API > anon public).');
     if (msg.startsWith('SESI_BERAKHIR')) {
       keluarLokal();
       renderLogin('Sesi berakhir, silakan masuk kembali.');
       throw new Error('SESI');
     }
-    if (/Failed to fetch|NetworkError|network|Load failed|fetch failed/i.test(msg) || (!error.code && navigator.onLine === false)) throw galatJaringan();
+    if (/Failed to fetch|NetworkError|network|Load failed|fetch failed|TypeError/i.test(msg) || (!error.code && navigator.onLine === false)) throw galatJaringan(msg);
     throw new Error(msg);
   }
   return data;
@@ -973,8 +994,55 @@ function renderBelumKonfig() {
   app.innerHTML = `<div class="hp"><div class="login">
     <div class="logo"><i class="ph-bold ph-plugs"></i></div>
     <h1>Belum terhubung</h1>
-    <p class="sub">Isi <b>SUPABASE_URL</b> dan <b>SUPABASE_ANON_KEY</b> di bagian atas skrip <code>index.html</code>, lalu muat ulang halaman.</p>
+    <p class="sub">${!window.supabase
+      ? 'Komponen penghubung server (supabase-js) gagal dimuat. Periksa internet, lalu muat ulang. Jika memakai jaringan sekolah, pastikan cdn.jsdelivr.net tidak diblokir.'
+      : sbGalatAwal ? `Pengaturan server tidak valid: ${esc(sbGalatAwal)}. Periksa <b>SUPABASE_URL</b> (contoh: https://abcdxyz.supabase.co) di index.html.`
+      : 'Isi <b>SUPABASE_URL</b> dan <b>SUPABASE_ANON_KEY</b> di bagian atas skrip <code>index.html</code>, lalu muat ulang halaman.'}</p>
     <div class="kredit">${esc(KONFIG.KREDIT)}</div></div></div>`;
+}
+
+/* ---------- Diagnosa koneksi: menunjukkan penyebab pasti gagal terhubung ---------- */
+async function diagnosaKoneksi(wadah) {
+  const baris = [];
+  const tulis = () => { wadah.innerHTML = `<div class="diag">${baris.map(([ok, judul, ket]) =>
+    `<div class="diag-baris ${ok === null ? 'tunggu' : ok ? 'ok' : 'gagal'}"><span>${ok === null ? '…' : ok ? '✓' : '✗'}</span><div><b>${esc(judul)}</b>${ket ? `<p>${ket}</p>` : ''}</div></div>`).join('')}</div>`; };
+  const langkah = judul => { baris.push([null, judul, '']); tulis(); return (ok, ket = '') => { baris[baris.length - 1] = [ok, judul, ket]; tulis(); return ok; }; };
+
+  let s = langkah('Internet perangkat');
+  if (!s(navigator.onLine !== false, navigator.onLine === false ? 'Perangkat tidak tersambung ke internet. Nyalakan data seluler atau Wi-Fi.' : '')) return;
+
+  s = langkah('Alamat server di index.html');
+  if (!/^https:\/\/[a-z0-9-]+\.supabase\.(co|in)$/i.test(SB_URL)) {
+    if (!s(/^https?:\/\/.+/i.test(SB_URL), `Alamat terbaca: <code>${esc(SB_URL || '(kosong)')}</code>. Seharusnya berbentuk <code>https://kodeproyek.supabase.co</code> (salin dari Supabase &gt; Project Settings &gt; API &gt; Project URL).`)) return;
+  } else s(true, `<code>${esc(SB_URL)}</code>`);
+
+  s = langkah('Server Supabase merespons');
+  let res;
+  try {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 12000);
+    res = await fetch(SB_URL + '/rest/v1/', { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }, signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(t);
+  } catch (e) {
+    s(false, `Server tidak terjangkau${e.name === 'AbortError' ? ' (tidak menjawab dalam 12 detik)' : ''}. Kemungkinan penyebab:
+      <br>1) <b>Proyek Supabase sedang dijeda (paused)</b> karena beberapa hari tidak dipakai. Buka dashboard Supabase, pilih proyek, tekan <b>Restore project</b>, tunggu ±2 menit.
+      <br>2) Alamat proyek salah ketik.
+      <br>3) Jaringan sekolah/operator memblokir <code>supabase.co</code>. Coba dengan data seluler.`);
+    return;
+  }
+  if (res.status === 401 || res.status === 403) { s(false, 'Server menolak kunci akses. <b>SUPABASE_ANON_KEY</b> salah atau bukan milik proyek ini. Salin ulang kunci <b>anon public</b> dari Supabase &gt; Project Settings &gt; API.'); return; }
+  if (res.status >= 500) { s(false, `Server sedang bermasalah (HTTP ${res.status}). Biasanya karena proyek baru saja dipulihkan. Tunggu beberapa menit lalu coba lagi.`); return; }
+  s(true, `HTTP ${res.status}`);
+
+  s = langkah('Database HadirKuy terpasang');
+  try {
+    const { error } = await sb.rpc('hk_masuk', { p_username: '__cek__', p_password: '__cek__' });
+    if (error && (error.code === 'PGRST202' || /Could not find the function/i.test(error.message))) {
+      s(false, 'Fungsi database belum ada. Jalankan file <b>hadirkuy_supabase.sql</b> di Supabase &gt; SQL Editor, lalu coba lagi.');
+      return;
+    }
+    if (error) { s(false, esc(error.message)); return; }
+    s(true, 'Semua baik. Silakan masuk.');
+  } catch (e) { s(false, 'Gagal memanggil database: ' + esc(e.message)); }
 }
 
 function renderLogin(pesan = '') {
@@ -991,9 +1059,12 @@ function renderLogin(pesan = '') {
       <button type="button" class="ikon-btn" id="l-lihat" aria-label="Tampilkan kata sandi"><i class="ph ph-eye"></i></button></div>
       <p class="bantuan">Pertama kali masuk? Kata sandi awal sama dengan NISN. Kamu akan diminta menggantinya.</p></div>
     <button class="btn btn-gelap btn-penuh" id="l-tombol" style="padding:15px;margin-top:6px">Masuk <i class="ph-bold ph-arrow-right"></i></button>
-    <div class="kredit" style="margin-top:28px">${esc(KONFIG.KREDIT)}</div>
+    <button type="button" class="tautan" id="l-diag" style="margin:16px auto 0;display:flex"><i class="ph-bold ph-stethoscope"></i>Cek koneksi server</button>
+    <div id="l-diag-hasil"></div>
+    <div class="kredit" style="margin-top:20px">${esc(KONFIG.KREDIT)}</div>
   </form></div>`;
   $('#l-lihat').onclick = () => { const i = $('#l-sandi'); i.type = i.type === 'password' ? 'text' : 'password'; };
+  $('#l-diag').onclick = () => diagnosaKoneksi($('#l-diag-hasil'));
   $('#f-login').onsubmit = async e => {
     e.preventDefault();
     const tombol = $('#l-tombol'), galat = $('#login-galat');
@@ -2599,7 +2670,7 @@ async function tabPengguna(main) {
   const st = S.staf; st.fPeran = st.fPeran ?? ''; st.fKelas = st.fKelas ?? ''; st.fCari = st.fCari ?? '';
   main.innerHTML = `<div class="panel">
     <div class="panel-kepala"><div><h2>Pengguna</h2><p class="muted kecil">Akun baru dan hasil reset memakai kata sandi awal = NISN/username, wajib diganti saat masuk.</p></div>
-      <div class="baris"><button class="btn btn-garis btn-kecil" id="u-impor"><i class="ph-bold ph-upload-simple"></i>Impor Siswa (CSV)</button>
+      <div class="baris"><button class="btn btn-garis btn-kecil" id="u-impor"><i class="ph-bold ph-file-xls"></i>Impor Siswa (Excel)</button>
       <button class="btn btn-gelap btn-kecil" id="u-tambah"><i class="ph-bold ph-plus"></i>Tambah</button></div></div>
     <div class="filter">
       <div class="bidang"><label class="label">Peran</label><select class="input input-kecil" id="u-peran"><option value="">Semua</option>${Object.entries(PERAN).map(([k, v]) => `<option value="${k}" ${st.fPeran === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
@@ -2683,11 +2754,66 @@ function modalPengguna(u) {
   };
 }
 
-function parseCSV(teks) {
-  const baris = teks.replace(/^﻿/, '').replace(/\r/g, '').split('\n').filter(b => b.trim());
+/* ---------- Impor siswa: kolom terpisah NO | NISN | NAMA | KELAS | NO WA ORTU ---------- */
+const KOLOM_IMPOR = ['NO', 'NISN', 'NAMA', 'KELAS', 'NO WA ORTU'];
+const normKolom = h => String(h ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+function petaKolom(baris) {
+  const p = {};
+  baris.forEach((h, i) => {
+    const k = normKolom(h);
+    if (!k) return;
+    if (p.nisn === undefined && k.includes('nisn')) p.nisn = i;
+    else if (p.nama === undefined && (k === 'nama' || k.startsWith('namasiswa') || k.startsWith('namalengkap') || k === 'namapesertadidik')) p.nama = i;
+    else if (p.kelas === undefined && (k === 'kelas' || k === 'rombel' || k.startsWith('kelasrombel'))) p.kelas = i;
+    else if (p.wa === undefined && (k.includes('wa') || k.includes('hp') || k.includes('telp') || k.includes('ortu') || k.includes('orangtua'))) p.wa = i;
+    else if (p.no === undefined && (k === 'no' || k === 'nomor' || k === 'nourut')) p.no = i;
+  });
+  return p.nisn !== undefined && p.nama !== undefined ? p : null;
+}
+function rapikanNisn(v) {
+  let t = String(v ?? '').trim().replace(/\.0+$/, '').replace(/\s+/g, '');
+  if (/^\d+$/.test(t) && t.length < 10) t = t.padStart(10, '0');   // nol di depan hilang karena Excel
+  return t;
+}
+function rapikanWA(v) {
+  let d = String(v ?? '').replace(/\.0+$/, '').replace(/[^0-9]/g, '');
+  if (d.startsWith('8')) d = '0' + d;                                // nol di depan hilang karena Excel
+  return d;
+}
+const waValid = d => !d || /^(0|62)8\d{7,12}$/.test(d);
+// Ubah tabel (array 2 dimensi) menjadi data siswa + status pemeriksaan per baris
+function tabelKeSiswa(tabel) {
+  const bersih = tabel.map(r => (r || []).map(c => String(c ?? '').trim())).filter(r => r.some(c => c));
+  if (!bersih.length) return [];
+  let peta = null, mulai = 0;
+  for (let i = 0; i < Math.min(10, bersih.length); i++) { peta = petaKolom(bersih[i]); if (peta) { mulai = i + 1; break; } }
+  if (!peta) {
+    // tanpa baris judul: anggap urutan NO, NISN, NAMA, KELAS, NO WA ORTU (atau tanpa NO)
+    const adaNo = /^\d{1,4}$/.test(bersih[0][0] || '') && (bersih[0].length >= 5 || /^\d{6,}$/.test(bersih[0][1] || ''));
+    peta = adaNo ? { no: 0, nisn: 1, nama: 2, kelas: 3, wa: 4 } : { nisn: 0, nama: 1, kelas: 2, wa: 3 };
+  }
+  const lihat = new Map();
+  return bersih.slice(mulai).map((r, i) => {
+    const x = {
+      no: peta.no !== undefined ? r[peta.no] : String(i + 1),
+      nisn: rapikanNisn(r[peta.nisn]), nama: (r[peta.nama] || '').replace(/\s+/g, ' '),
+      kelas: (peta.kelas !== undefined ? r[peta.kelas] : '') || '', no_wa: peta.wa !== undefined ? rapikanWA(r[peta.wa]) : '',
+    };
+    const g = [];
+    if (!x.nisn) g.push('NISN kosong');
+    else if (!/^[A-Za-z0-9._-]{3,40}$/.test(x.nisn)) g.push('NISN tidak valid');
+    if (!x.nama) g.push('Nama kosong');
+    if (!waValid(x.no_wa)) g.push('No WA tidak valid');
+    if (x.nisn) { const k = x.nisn.toLowerCase(); if (lihat.has(k)) g.push(`NISN ganda (baris ${lihat.get(k)})`); else lihat.set(k, i + 1); }
+    x.galat = g; return x;
+  }).filter(x => x.nisn || x.nama);
+}
+function teksKeTabel(teks) {
+  const baris = String(teks).replace(/^﻿/, '').replace(/\r/g, '').split('\n').filter(b => b.trim());
   if (!baris.length) return [];
-  const pemisah = baris[0].split(';').length > baris[0].split(',').length ? ';' : (baris[0].includes('\t') ? '\t' : ',');
-  const pecah = b => {
+  const contoh = baris[0];
+  const pemisah = contoh.includes('\t') ? '\t' : (contoh.split(';').length > contoh.split(',').length ? ';' : ',');
+  return baris.map(b => {
     const out = []; let cur = '', q = false;
     for (let i = 0; i < b.length; i++) {
       const ch = b[i];
@@ -2696,39 +2822,90 @@ function parseCSV(teks) {
       else if (ch === pemisah) { out.push(cur); cur = ''; }
       else cur += ch;
     }
-    out.push(cur); return out.map(s => s.trim());
-  };
-  let rows = baris.map(pecah);
-  if (/nisn|username/i.test(rows[0][0] || '')) rows = rows.slice(1);
-  return rows.filter(r => r[0] && r[1]).map(r => ({ nisn: r[0], nama: r[1], kelas: r[2] || '', no_wa: r[3] || '' }));
+    out.push(cur); return out;
+  });
+}
+async function bacaFileImpor(file) {
+  if (/\.(xlsx|xls|ods)$/i.test(file.name)) {
+    await muatSkrip(XLSX_URL);
+    const wb = XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+  }
+  return teksKeTabel(await file.text());
+}
+async function unduhTemplatImpor() {
+  try {
+    await muatSkrip(XLSX_URL);
+    const ws = XLSX.utils.aoa_to_sheet([KOLOM_IMPOR, [1, '0012345678', 'Contoh Nama Siswa', 'X-1', '081234567890'], [2, '0012345679', 'Contoh Siswa Kedua', 'X-2', '']]);
+    ws['!cols'] = [{ wch: 5 }, { wch: 14 }, { wch: 32 }, { wch: 10 }, { wch: 16 }];
+    ['B2', 'B3', 'E2', 'E3'].forEach(c => { if (ws[c]) { ws[c].t = 's'; ws[c].z = '@'; } });
+    const petunjuk = XLSX.utils.aoa_to_sheet([
+      ['PETUNJUK IMPOR SISWA — HadirKuy'], [],
+      ['Kolom', 'Isi'], ['NO', 'Nomor urut (boleh dikosongkan, tidak disimpan).'],
+      ['NISN', 'Wajib. 10 digit. Format sel sebagai Teks agar angka 0 di depan tidak hilang (jika hilang, aplikasi menambahkannya kembali).'],
+      ['NAMA', 'Wajib. Nama lengkap siswa.'], ['KELAS', 'Contoh: X-1, XI IPA 2. Kelas yang belum ada dibuat otomatis.'],
+      ['NO WA ORTU', 'Opsional. Contoh 081234567890. Dipakai untuk notifikasi WhatsApp ke orang tua.'], [],
+      ['NISN yang sudah terdaftar akan diperbarui nama, kelas, dan No WA-nya. Kata sandi awal siswa = NISN.']]);
+    petunjuk['!cols'] = [{ wch: 14 }, { wch: 90 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Data Siswa');
+    XLSX.utils.book_append_sheet(wb, petunjuk, 'Petunjuk');
+    XLSX.writeFile(wb, 'Templat_Impor_Siswa_HadirKuy.xlsx');
+  } catch (e) { toast(e.message, true); }
 }
 function modalImpor() {
-  const m = bukaModal('Impor Siswa dari CSV', `
-    <div class="banner info"><i class="ph-bold ph-info"></i><span>Format kolom: <b>nisn, nama, kelas, no_wa_ortu</b> (kolom ke-4 opsional; pemisah koma atau titik koma). Kelas yang belum ada dibuat otomatis. NISN yang sudah ada akan diperbarui nama & kelasnya.</span></div>
-    <div class="banner warn"><i class="ph-bold ph-warning"></i><span>Di Excel, format kolom NISN sebagai <b>Teks</b> agar angka 0 di depan tidak hilang.</span></div>
-    <div class="baris" style="margin-bottom:12px"><input type="file" accept=".csv,text/csv,.txt" id="im-file" class="input input-kecil" style="flex:1">
-      <button class="btn btn-garis btn-kecil" id="im-templat"><i class="ph-bold ph-file-csv"></i>Unduh templat</button></div>
-    <div class="bidang"><label class="label">Atau tempel isi CSV di sini</label><textarea class="input" id="im-teks" rows="7" placeholder="nisn,nama,kelas,no_wa_ortu&#10;0012345678,Budi Santoso,X-1,081234567890"></textarea></div>
-    <p class="muted kecil" id="im-pratinjau">0 baris siap diimpor.</p>
+  const m = bukaModal('Impor Siswa', `
+    <div class="banner info"><i class="ph-bold ph-info"></i><span>Siapkan file Excel dengan kolom terpisah:
+      ${KOLOM_IMPOR.map(k => `<span class="chip st-hadir" style="margin:2px">${k}</span>`).join('')}
+      <br>Urutan kolom bebas asalkan judul kolom ada. Kelas yang belum ada dibuat otomatis; NISN yang sudah ada diperbarui.</span></div>
+    <div class="baris" style="margin-bottom:12px">
+      <button class="btn btn-gelap btn-kecil" id="im-templat"><i class="ph-bold ph-file-xls"></i>Unduh templat Excel</button>
+      <label class="btn btn-garis btn-kecil" style="cursor:pointer"><i class="ph-bold ph-upload-simple"></i>Pilih file (.xlsx / .csv)
+        <input type="file" accept=".xlsx,.xls,.ods,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" id="im-file" hidden></label>
+      <span class="muted kecil" id="im-nama-file"></span>
+    </div>
+    <details style="margin-bottom:12px"><summary class="tautan" style="cursor:pointer">Atau salin dari Excel lalu tempel di sini</summary>
+      <textarea class="input" id="im-teks" rows="5" style="margin-top:8px" placeholder="Blok tabel di Excel (termasuk judul kolom), salin (Ctrl+C), lalu tempel (Ctrl+V) di sini"></textarea></details>
+    <div id="im-tabel"></div>
     <div id="im-hasil"></div>
     <div class="modal-aksi"><button class="btn btn-garis" data-tutup>Tutup</button><button class="btn btn-gelap" id="im-kirim" disabled>Impor</button></div>`, true);
   let data = [];
-  const segar = () => { data = parseCSV($('#im-teks', m).value); $('#im-pratinjau', m).textContent = `${data.length} baris siap diimpor.`; $('#im-kirim', m).disabled = !data.length; };
-  $('#im-teks', m).oninput = segar;
-  $('#im-file', m).onchange = async e => { const f = e.target.files[0]; if (f) { $('#im-teks', m).value = await f.text(); segar(); } };
-  $('#im-templat', m).onclick = () => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['﻿nisn,nama,kelas,no_wa_ortu\r\n0012345678,Contoh Nama Siswa,X-1,081234567890\r\n'], { type: 'text/csv' }));
-    a.download = 'templat_impor_siswa.csv'; document.body.appendChild(a); a.click(); a.remove();
+  const tampil = () => {
+    const ok = data.filter(x => !x.galat.length), salah = data.length - ok.length;
+    $('#im-tabel', m).innerHTML = data.length ? `
+      <div class="ringkas"><span class="chip st-hadir">${ok.length} siap diimpor</span>${salah ? `<span class="chip st-alpa">${salah} bermasalah (dilewati)</span>` : ''}</div>
+      <div class="tabel-wrap" style="max-height:340px;overflow:auto"><table>
+        <thead><tr>${KOLOM_IMPOR.map(k => `<th>${k}</th>`).join('')}<th>Periksa</th></tr></thead>
+        <tbody>${data.map(x => `<tr${x.galat.length ? ' style="background:#fff1f2"' : ''}>
+          <td class="muted">${esc(x.no)}</td><td class="tebal">${esc(x.nisn)}</td><td>${esc(x.nama)}</td><td>${esc(x.kelas || '—')}</td><td>${esc(x.no_wa || '—')}</td>
+          <td>${x.galat.length ? `<span class="chip st-alpa">${esc(x.galat.join(', '))}</span>` : '<span class="chip st-hadir">OK</span>'}</td></tr>`).join('')}</tbody></table></div>`
+      : '';
+    $('#im-kirim', m).disabled = !ok.length;
+    $('#im-kirim', m).textContent = ok.length ? `Impor ${ok.length} siswa` : 'Impor';
+  };
+  const muat = tabel => {
+    data = tabelKeSiswa(tabel); $('#im-hasil', m).innerHTML = '';
+    if (!data.length) $('#im-tabel', m).innerHTML = '<div class="galat">Tidak ada data siswa yang terbaca. Pastikan ada kolom NISN dan NAMA.</div>';
+    else tampil();
+  };
+  $('#im-templat', m).onclick = unduhTemplatImpor;
+  $('#im-teks', m).oninput = e => muat(teksKeTabel(e.target.value));
+  $('#im-file', m).onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    $('#im-nama-file', m).textContent = f.name;
+    try { muat(await bacaFileImpor(f)); } catch (err) { $('#im-tabel', m).innerHTML = `<div class="galat">File tidak dapat dibaca: ${esc(err.message)}</div>`; }
+    e.target.value = '';
   };
   $('#im-kirim', m).onclick = async () => {
+    const kirim = data.filter(x => !x.galat.length).map(x => ({ nisn: x.nisn, nama: x.nama, kelas: x.kelas, no_wa: x.no_wa }));
     const btn = $('#im-kirim', m); btn.disabled = true; btn.innerHTML = '<i class="ph-bold ph-spinner putar"></i> Mengimpor…';
     try {
-      const r = await rpc('hk_admin_impor_siswa', { p_data: data });
+      const r = await rpc('hk_admin_impor_siswa', { p_data: kirim });
       $('#im-hasil', m).innerHTML = `<div class="banner info"><i class="ph-bold ph-check-circle"></i><span>${r.baru} siswa baru, ${r.diperbarui} diperbarui, ${r.kelas_baru} kelas baru, ${r.dilewati} dilewati.${(r.catatan || []).length ? '<br>' + r.catatan.map(esc).join('<br>') : ''}</span></div>`;
       S.staf.kelas = null; await pastikanKelas(true); muatPengguna();
       btn.innerHTML = 'Selesai';
-    } catch (e) { if (e.message !== 'SESI') $('#im-hasil', m).innerHTML = `<div class="galat">${esc(e.message)}</div>`; btn.disabled = false; btn.innerHTML = 'Impor'; }
+    } catch (e) { if (e.message !== 'SESI') $('#im-hasil', m).innerHTML = `<div class="galat">${esc(e.message)}</div>`; btn.disabled = false; btn.textContent = 'Impor'; }
   };
 }
 
