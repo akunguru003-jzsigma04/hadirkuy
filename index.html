@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d9488">
+<title>HadirKuy · Absensi Digital MAN 1 BOALEMO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+:root{
+  --b50:#f0fdfa;--b100:#ccfbf1;--b200:#99f6e4;--b500:#14b8a6;--b600:#0d9488;--b700:#0f766e;--b900:#134e4a;
+  --s50:#f8fafc;--s100:#f1f5f9;--s200:#e2e8f0;--s300:#cbd5e1;--s400:#94a3b8;--s500:#64748b;--s600:#475569;--s700:#334155;--s800:#1e293b;--s900:#0f172a;
+  --hijau:#86efac;--merah:#fca5a5;--oranye:#fdba74;--biru:#93c5fd;--ungu:#c4b5fd;
+  --r:20px;--bayang:0 10px 40px -10px rgba(0,0,0,.06);--bayang-brand:0 20px 40px -10px rgba(20,184,166,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;color:var(--s800);background:var(--s50);-webkit-tap-highlight-color:transparent;font-size:15px;line-height:1.45}
+::selection{background:var(--b200)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+button:disabled{opacity:.55;cursor:not-allowed}
+a{color:var(--b600)}
+i.ph,i.ph-bold,i.ph-fill{line-height:1}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- Tombol & form ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:14px;font-weight:700;transition:transform .12s,background .2s;white-space:nowrap}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn-gelap{background:var(--s900);color:#fff}.btn-gelap:hover{background:var(--s800)}
+.btn-brand{background:var(--b500);color:#fff}.btn-brand:hover{background:var(--b600)}
+.btn-garis{background:#fff;border:1.5px solid var(--s200);color:var(--s700)}.btn-garis:hover{border-color:var(--s300);background:var(--s50)}
+.btn-bahaya{background:#fef2f2;color:#b91c1c;border:1.5px solid #fecaca}
+.btn-kecil{padding:7px 12px;border-radius:10px;font-size:13px}
+.btn-penuh{width:100%}
+.ikon-btn{width:38px;height:38px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:20px}
+.label{display:block;font-size:13px;font-weight:700;color:var(--s600);margin-bottom:6px}
+.input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--s200);background:#fff;outline:none;transition:border .15s,box-shadow .15s}
+.input:focus{border-color:var(--b500);box-shadow:0 0 0 4px rgba(20,184,166,.15)}
+.input-kecil{padding:8px 10px;border-radius:10px;font-size:14px}
+.bidang{margin-bottom:14px}
+.bantuan{font-size:12px;color:var(--s500);margin-top:5px}
+.galat{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;padding:10px 12px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:14px}
+.galat:empty{display:none}
+.baris{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.muted{color:var(--s500)}
+.kecil{font-size:12px}
+.tebal{font-weight:700}
+.putar{animation:putar 1s linear infinite;display:inline-block}
+@keyframes putar{to{transform:rotate(360deg)}}
+
+/* ---------- Chip status ---------- */
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.st-hadir{background:#dcfce7;color:#166534}
+.st-terlambat{background:#ffedd5;color:#9a3412}
+.st-izin{background:#dbeafe;color:#1e40af}
+.st-sakit{background:#ede9fe;color:#5b21b6}
+.st-alpa{background:#fee2e2;color:#991b1b}
+.st-belum{background:var(--s100);color:var(--s600)}
+.st-libur{background:var(--s100);color:var(--s500)}
+.st-kosong{background:transparent;color:var(--s400)}
+
+/* ---------- Mode HP (siswa & login) ---------- */
+.hp{max-width:420px;margin:0 auto;background:#fff;height:100vh;height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden;box-shadow:0 0 50px rgba(0,0,0,.05)}
+@media (min-width:421px){
+  body.mode-hp{background:var(--s200);display:flex;align-items:center;justify-content:center;min-height:100vh}
+  body.mode-hp .hp{height:min(850px,96vh);width:420px;border-radius:40px;border:8px solid var(--s300)}
+}
+.hp-head{padding:28px 22px 14px;background:#fff;flex-shrink:0}
+.hp-main{flex:1;overflow-y:auto;padding:4px 22px 24px;scrollbar-width:none}
+.hp-main::-webkit-scrollbar{display:none}
+.hp-nav{flex-shrink:0;background:#fff;border-top:1px solid var(--s100);display:flex;justify-content:space-around;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+.hp-nav button{display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;color:var(--s400);font-size:11px;font-weight:600;padding:4px 0}
+.hp-nav button i{font-size:24px}
+.hp-nav button.aktif{color:var(--b500);font-weight:800}
+.sapa{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sapa h1{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--s900)}
+.avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--b500),var(--b600));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex-shrink:0;box-shadow:0 0 0 3px var(--b100)}
+.avatar.besar{width:76px;height:76px;font-size:28px}
+.lokasi-chip{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:12px;font-weight:700;color:var(--s500);background:var(--s50);padding:7px 11px;border-radius:12px}
+.lokasi-chip i{color:var(--b500);font-size:15px}
+.jam-live{font-variant-numeric:tabular-nums}
+
+.kartu-status{background:linear-gradient(135deg,var(--b500),var(--b600));border-radius:28px;padding:22px;color:#fff;box-shadow:var(--bayang-brand);position:relative;overflow:hidden;margin:8px 0 22px}
+.kartu-status::before{content:"";position:absolute;top:-30px;right:-30px;width:130px;height:130px;background:#fff;opacity:.1;border-radius:50%;filter:blur(20px)}
+.kartu-status::after{content:"";position:absolute;bottom:-30px;left:-30px;width:100px;height:100px;background:var(--b900);opacity:.25;border-radius:50%;filter:blur(18px)}
+.kartu-status>*{position:relative;z-index:1}
+.ks-atas{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.ks-atas h2{font-size:15px;font-weight:600;color:var(--b50)}
+.badge{padding:5px 11px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background:rgba(255,255,255,.2)}
+.badge.hijau{background:#34d399;color:#064e3b}
+.badge.oranye{background:#fdba74;color:#7c2d12}
+.badge.abu{background:var(--s200);color:var(--s800)}
+.badge.biru{background:#bfdbfe;color:#1e3a8a}
+.badge.merah{background:#fecaca;color:#7f1d1d}
+.ks-jam{display:flex;gap:12px}
+.ks-kotak{flex:1;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:14px}
+.ks-kotak .lbl{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.85;margin-bottom:4px}
+.ks-kotak .nilai{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.ks-kotak .nilai.redup{opacity:.5}
+.ks-kotak .sub{font-size:11px;font-weight:700;margin-top:2px;opacity:.9}
+.ks-info{margin-top:14px;font-size:12px;font-weight:600;opacity:.9;display:flex;align-items:center;gap:6px}
+
+.btn-scan{width:100%;background:var(--s900);color:#fff;border-radius:24px;padding:18px 22px;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:var(--bayang);transition:transform .12s,background .2s;margin-bottom:8px}
+.btn-scan:hover{background:var(--s800)}.btn-scan:active{transform:scale(.97)}
+.btn-scan .ikn{background:rgba(255,255,255,.2);padding:8px;border-radius:50%;display:flex}
+.btn-scan .ikn i{font-size:24px}
+.petunjuk{text-align:center;font-size:12px;color:var(--s500);font-weight:600;margin-bottom:24px}
+.kartu-info{display:flex;gap:14px;align-items:flex-start;background:var(--b50);border:1px solid var(--b100);border-radius:22px;padding:18px;margin-bottom:24px}
+.kartu-info>i{font-size:28px;color:var(--b600);flex-shrink:0}
+.kartu-info h3{font-size:15px;font-weight:800;color:var(--s900);margin-bottom:3px}
+.kartu-info p{font-size:13px;color:var(--s600)}
+.kartu-info.oranye{background:#fff7ed;border-color:#fed7aa}.kartu-info.oranye>i{color:#ea580c}
+
+.judul-seksi{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px}
+.judul-seksi h3{font-size:17px;font-weight:800;color:var(--s800)}
+.tautan{font-size:12px;font-weight:700;color:var(--b600);display:inline-flex;align-items:center;gap:3px}
+.statistik{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{border-radius:20px;padding:15px;height:108px;display:flex;flex-direction:column;justify-content:space-between}
+.stat .atas{display:flex;justify-content:space-between;align-items:flex-start}
+.stat .ikn{background:rgba(255,255,255,.45);padding:8px;border-radius:12px;display:flex;font-size:18px}
+.stat .angka{font-size:30px;font-weight:800;line-height:1}
+.stat .nama{font-size:14px;font-weight:800}
+.stat.hijau{background:var(--hijau);color:#064e3b}.stat.oranye{background:var(--oranye);color:#431407}
+.stat.biru{background:var(--biru);color:#172554}.stat.merah{background:var(--merah);color:#450a0a}
+.persen-hadir{margin-top:12px;font-size:12px;color:var(--s500);font-weight:600;text-align:center}
+
+/* Riwayat */
+.nav-bulan{display:flex;align-items:center;justify-content:space-between;background:var(--s50);border-radius:16px;padding:6px;margin-bottom:14px}
+.nav-bulan b{font-size:15px}
+.rekap-mini{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:16px}
+.rekap-mini div{border-radius:14px;padding:9px 4px;text-align:center}
+.rekap-mini b{display:block;font-size:19px;font-weight:800}
+.rekap-mini span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.daftar-hari{display:flex;flex-direction:column;gap:8px}
+.hari{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:16px;border:1px solid var(--s100);background:#fff}
+.hari.redup{background:var(--s50);opacity:.75}
+.hari-tgl{font-weight:700;font-size:14px;min-width:92px}
+.hari-kanan{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.hari-jam{font-size:11px;color:var(--s500);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* Profil */
+.profil-kepala{text-align:center;padding:10px 0 20px}
+.profil-kepala h2{font-size:20px;font-weight:800;margin-top:12px}
+.daftar-info{border:1px solid var(--s100);border-radius:18px;overflow:hidden;margin-bottom:16px}
+.daftar-info div{display:flex;justify-content:space-between;padding:13px 16px;font-size:14px;border-bottom:1px solid var(--s100)}
+.daftar-info div:last-child{border-bottom:0}
+.daftar-info span{color:var(--s500)}
+.kredit{text-align:center;font-size:11px;color:var(--s400);font-weight:600;padding:18px 0 6px;letter-spacing:.02em}
+
+/* Lapisan (scanner / hasil) */
+.lapis{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;animation:muncul .25s ease}
+@keyframes muncul{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.lapis.gelap{background:var(--s900);color:#fff}
+.lapis.terang{background:#fff;align-items:center;justify-content:center;padding:28px;text-align:center}
+.lapis-head{padding:22px;display:flex;justify-content:space-between;align-items:center}
+.lapis-head h3{font-size:17px;font-weight:800}
+.lapis-head .ikon-btn{background:rgba(255,255,255,.1);color:#fff}
+.area-scan{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 24px 40px}
+.area-scan>p{color:rgba(255,255,255,.7);font-size:13px;font-weight:600;text-align:center;margin-bottom:26px}
+.bingkai{width:264px;height:264px;position:relative;border-radius:22px;overflow:hidden;background:#000}
+.bingkai #reader{width:100%;height:100%}
+.bingkai #reader video{width:100%!important;height:100%!important;object-fit:cover}
+.bingkai #reader img,.bingkai #reader__dashboard{display:none!important}
+.bingkai #qr-shaded-region{border-color:rgba(0,0,0,.25)!important}
+.sudut{position:absolute;inset:0;pointer-events:none;z-index:3}
+.sudut::before,.sudut::after,.sudut span::before,.sudut span::after{content:"";position:absolute;width:34px;height:34px;border:4px solid var(--b500)}
+.sudut::before{top:0;left:0;border-right:0;border-bottom:0;border-radius:18px 0 0 0}
+.sudut::after{top:0;right:0;border-left:0;border-bottom:0;border-radius:0 18px 0 0}
+.sudut span::before{bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 18px}
+.sudut span::after{bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 18px 0}
+.garis-scan{position:absolute;left:0;right:0;height:2px;background:var(--b500);box-shadow:0 0 12px var(--b500);z-index:2;animation:pindai 2s infinite linear}
+@keyframes pindai{0%,100%{top:4%}50%{top:96%}}
+.bingkai.proses .garis-scan{animation-duration:.7s}
+.status-scan{margin-top:24px;font-size:12px;font-weight:600;color:rgba(255,255,255,.75);display:flex;align-items:center;gap:6px;text-align:center}
+.status-scan.ok{color:#5eead4}.status-scan.warn{color:#fdba74}
+.hasil-ikon{width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:22px;font-size:60px}
+.hasil-ikon.ok{background:var(--b100);color:var(--b500);animation:lompat 1s ease 2}
+.hasil-ikon.gagal{background:#ffedd5;color:#ea580c}
+@keyframes lompat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.lapis.terang h2{font-size:24px;font-weight:800;color:var(--s900);margin-bottom:8px}
+.lapis.terang p{color:var(--s500);font-weight:500;margin-bottom:34px;max-width:320px}
+.lapis.terang .tombol{width:100%;display:flex;flex-direction:column;gap:10px}
+
+/* Login */
+.login{flex:1;display:flex;flex-direction:column;justify-content:center;padding:32px 26px;overflow-y:auto}
+.logo{width:72px;height:72px;border-radius:24px;background:linear-gradient(135deg,var(--b500),var(--b600));display:flex;align-items:center;justify-content:center;color:#fff;font-size:38px;box-shadow:var(--bayang-brand);margin-bottom:20px}
+.login h1{font-size:28px;font-weight:800;letter-spacing:-.02em;color:var(--s900)}
+.login .sub{color:var(--s500);font-weight:600;margin:4px 0 28px}
+.sandi-wrap{position:relative}
+.sandi-wrap .input{padding-right:48px}
+.sandi-wrap button{position:absolute;right:6px;top:50%;transform:translateY(-50%);color:var(--s400)}
+
+/* ---------- Mode staf ---------- */
+body.mode-staf{background:var(--s50)}
+.staf{min-height:100vh;display:flex;flex-direction:column}
+.staf-head{background:#fff;border-bottom:1px solid var(--s100);padding:14px clamp(14px,3vw,32px);display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:0;z-index:20}
+.merek{display:flex;align-items:center;gap:10px}
+.merek .logo{width:40px;height:40px;border-radius:12px;font-size:22px;margin:0;box-shadow:none}
+.merek b{font-size:17px;font-weight:800;display:block;line-height:1.1}
+.merek small{font-size:12px;color:var(--s500);font-weight:600}
+.staf-user{display:flex;align-items:center;gap:12px;font-size:13px}
+.staf-user .nm{text-align:right;line-height:1.2}
+.staf-user .nm b{display:block}
+.staf-user .nm span{color:var(--s500);font-size:12px;text-transform:capitalize}
+.staf-tabs{display:flex;gap:4px;padding:10px clamp(14px,3vw,32px);overflow-x:auto;background:#fff;border-bottom:1px solid var(--s100);scrollbar-width:none;position:sticky;top:69px;z-index:19}
+.staf-tabs::-webkit-scrollbar{display:none}
+.staf-tabs button{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:12px;font-weight:700;font-size:14px;color:var(--s500);white-space:nowrap}
+.staf-tabs button i{font-size:18px}
+.staf-tabs button:hover{background:var(--s50);color:var(--s800)}
+.staf-tabs button.aktif{background:var(--b50);color:var(--b700)}
+.staf-main{flex:1;padding:20px clamp(14px,3vw,32px) 30px;max-width:1200px;width:100%;margin:0 auto}
+.panel{background:#fff;border:1px solid var(--s100);border-radius:var(--r);padding:18px;box-shadow:var(--bayang);margin-bottom:18px}
+.panel h2{font-size:18px;font-weight:800;margin-bottom:4px}
+.panel h3{font-size:15px;font-weight:800;margin-bottom:10px}
+.panel-kepala{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.filter{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.filter .bidang{margin:0;min-width:150px}
+.ringkas{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}
+.ringkas .chip{font-size:13px;padding:6px 12px}
+.tabel-wrap{overflow-x:auto;border:1px solid var(--s100);border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{background:var(--s50);text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--s500);font-weight:700;padding:10px 12px;white-space:nowrap}
+td{padding:10px 12px;border-top:1px solid var(--s100);vertical-align:middle}
+tr.klik{cursor:pointer}tr.klik:hover td{background:var(--b50)}
+td.angka,th.angka{text-align:center;font-variant-numeric:tabular-nums}
+.kosong{text-align:center;padding:36px 12px;color:var(--s400);font-weight:600}
+.kosong i{font-size:36px;display:block;margin-bottom:8px}
+.banner{padding:12px 14px;border-radius:14px;font-size:13px;font-weight:600;margin-bottom:14px;display:flex;gap:8px;align-items:center}
+.banner.info{background:var(--b50);color:var(--b700)}
+.banner.warn{background:#fff7ed;color:#9a3412}
+.perlu{color:#c2410c;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:3px}
+.cek-hari{display:flex;gap:6px;flex-wrap:wrap}
+.cek-hari label{display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--s200);border-radius:12px;font-weight:700;font-size:13px;cursor:pointer}
+.cek-hari input{accent-color:var(--b600)}
+.saklar{display:flex;align-items:center;gap:10px;font-weight:700;cursor:pointer}
+.saklar input{width:20px;height:20px;accent-color:var(--b600)}
+.seksi-form{border-top:1px dashed var(--s200);padding-top:16px;margin-top:6px}
+
+/* Modal */
+.modal-latar{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:0;animation:muncul .2s}
+@media (min-width:640px){.modal-latar{align-items:center;padding:20px}}
+.modal{background:#fff;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;border-radius:24px 24px 0 0;padding:20px}
+@media (min-width:640px){.modal{border-radius:24px}}
+.modal.lebar{max-width:760px}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.modal-head h3{font-size:18px;font-weight:800}
+.modal-head .ikon-btn{background:var(--s100)}
+.modal-aksi{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;flex-wrap:wrap}
+
+/* Toast */
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(92vw,420px)}
+.toast{background:var(--s900);color:#fff;padding:12px 16px;border-radius:14px;font-weight:600;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);animation:muncul .2s;display:flex;gap:8px;align-items:center}
+.toast.gagal{background:#b91c1c}
+
+/* Layar QR */
+.layar-qr{position:fixed;inset:0;z-index:150;background:radial-gradient(circle at 20% 0%,#115e59 0,#0f172a 55%);color:#fff;display:flex;flex-direction:column;padding:clamp(16px,3vw,36px)}
+.lq-atas{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.lq-madrasah{font-size:clamp(18px,2.4vw,30px);font-weight:800}
+.lq-tgl{font-size:clamp(13px,1.4vw,18px);color:#99f6e4;font-weight:600}
+.lq-jam{font-size:clamp(30px,5vw,64px);font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.lq-tengah{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:0}
+.lq-jenis{font-size:clamp(20px,3vw,38px);font-weight:800;letter-spacing:.08em;padding:6px 22px;border-radius:999px;background:var(--b500)}
+.lq-jenis.pulang{background:#f59e0b}
+.lq-qr{background:#fff;border-radius:24px;padding:14px;width:min(58vh,80vw);height:min(58vh,80vw);display:flex;align-items:center;justify-content:center;color:var(--s500);font-weight:700;text-align:center}
+.lq-qr svg{width:100%;height:100%;display:block}
+.lq-bar{width:min(58vh,80vw);height:8px;background:rgba(255,255,255,.15);border-radius:99px;overflow:hidden}
+.lq-bar div{height:100%;background:#5eead4;width:100%}
+.lq-petunjuk{font-size:clamp(14px,1.6vw,20px);color:#ccfbf1;text-align:center}
+.lq-bawah{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.lq-stat{display:flex;gap:22px;font-size:clamp(13px,1.4vw,18px);color:#ccfbf1}
+.lq-stat b{font-size:clamp(20px,2.4vw,32px);color:#fff;margin-right:6px}
+.lq-kontrol{display:flex;gap:8px;align-items:center;opacity:.55;transition:opacity .2s}
+.lq-kontrol:hover{opacity:1}
+.lq-kontrol select,.lq-kontrol button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px}
+.lq-kontrol option{color:var(--s900)}
+.lq-kredit{font-size:11px;color:rgba(255,255,255,.4);text-align:center;margin-top:8px}
+
+@media (max-width:640px){.grid2,.grid3{grid-template-columns:1fr}.staf-user .nm{display:none}.staf-tabs{top:69px}}
+</style>
+</head>
+<body class="mode-hp">
+<div id="app"></div>
+<div id="toast" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   HADIRKUY · Fase 1 · MAN 1 BOALEMO
+   1) Isi SUPABASE_URL & SUPABASE_ANON_KEY dari Supabase > Project Settings > API
+   2) Wajib dibuka lewat HTTPS (kamera & GPS tidak berjalan di http://)
+   Created by AN1MO LAB SQUAD
+   ===================================================================== */
+const KONFIG = {
+  SUPABASE_URL: 'https://PROJECT-ANDA.supabase.co',
+  SUPABASE_ANON_KEY: 'ISI-ANON-KEY-ANDA',
+  NAMA_MADRASAH: 'MAN 1 BOALEMO',
+  KREDIT: 'Created by AN1MO LAB SQUAD',
+};
+
+const sb = (window.supabase && !KONFIG.SUPABASE_URL.includes('PROJECT-ANDA'))
+  ? window.supabase.createClient(KONFIG.SUPABASE_URL, KONFIG.SUPABASE_ANON_KEY, { auth: { persistSession: false } })
+  : null;
+
+/* ---------- Utilitas ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const app = $('#app');
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const simpan = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const PERAN = { siswa: 'Siswa', wali: 'Wali Kelas', bk: 'Guru BK', kepala: 'Kepala Madrasah', petugas: 'Petugas Layar QR', admin: 'Administrator' };
+const STATUS = {
+  hadir:     { label: 'Hadir',       cls: 'st-hadir',     ikon: 'ph-check-circle' },
+  terlambat: { label: 'Terlambat',   cls: 'st-terlambat', ikon: 'ph-clock' },
+  izin:      { label: 'Izin',        cls: 'st-izin',      ikon: 'ph-envelope-simple' },
+  sakit:     { label: 'Sakit',       cls: 'st-sakit',     ikon: 'ph-first-aid' },
+  alpa:      { label: 'Alpa',        cls: 'st-alpa',      ikon: 'ph-x-circle' },
+  belum:     { label: 'Belum absen', cls: 'st-belum',     ikon: 'ph-hourglass' },
+};
+
+const S = {
+  token: simpan.get('hk_token'),
+  b: null, profil: null,
+  offset: 0, zona: 'Asia/Makassar', label: 'WITA',
+  tab: 'beranda', bulan: null, jenisScan: 'masuk',
+  staf: { tab: null, kelas: null },
+};
+
+function toast(pesan, gagal = false) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (gagal ? ' gagal' : '');
+  t.innerHTML = `<i class="ph-bold ${gagal ? 'ph-warning-circle' : 'ph-check-circle'}"></i>${esc(pesan)}`;
+  $('#toast').appendChild(t);
+  setTimeout(() => t.remove(), 3800);
+}
+
+async function rpc(fn, args = {}, pakaiToken = true) {
+  const { data, error } = await sb.rpc(fn, pakaiToken ? { p_token: S.token, ...args } : args);
+  if (error) {
+    const msg = error.message || 'Terjadi kesalahan. Coba lagi.';
+    if (msg.startsWith('SESI_BERAKHIR')) {
+      keluarLokal();
+      renderLogin('Sesi berakhir, silakan masuk kembali.');
+      throw new Error('SESI');
+    }
+    if (/Failed to fetch|NetworkError|network/i.test(msg)) throw new Error('Tidak ada koneksi internet. Periksa sinyal lalu coba lagi.');
+    throw new Error(msg);
+  }
+  return data;
+}
+
+/* ---------- Waktu (selalu mengikuti jam server & zona madrasah) ---------- */
+const sekarang = () => new Date(Date.now() + S.offset);
+function bagian(d, opsi) {
+  const o = {};
+  new Intl.DateTimeFormat('id-ID', { timeZone: S.zona, ...opsi }).formatToParts(d).forEach(p => o[p.type] = p.value);
+  return o;
+}
+function fmtJam(d, detik = false) {
+  const p = bagian(d, { hour: '2-digit', minute: '2-digit', second: detik ? '2-digit' : undefined, hourCycle: 'h23' });
+  return `${p.hour}:${p.minute}${detik ? ':' + p.second : ''}`;
+}
+const fmtTglPanjang = d => new Intl.DateTimeFormat('id-ID', { timeZone: S.zona, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+function tglISO(d) { const p = bagian(d, { year: 'numeric', month: '2-digit', day: '2-digit' }); return `${p.year}-${p.month}-${p.day}`; }
+function fmtTglPendek(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Intl.DateTimeFormat('id-ID', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+function fmtTglSedang(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Intl.DateTimeFormat('id-ID', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+function bulanIni() { const [y, m] = tglISO(sekarang()).split('-').map(Number); return { y, m }; }
+function detak() {
+  const d = sekarang();
+  $$('[data-jam]').forEach(e => e.textContent = fmtJam(d) + ' ' + S.label);
+  $$('[data-jam-detik]').forEach(e => e.textContent = fmtJam(d, true));
+  $$('[data-tgl]').forEach(e => e.textContent = fmtTglPanjang(d));
+}
+setInterval(detak, 1000);
+
+const chip = st => {
+  const m = STATUS[st];
+  return m ? `<span class="chip ${m.cls}"><i class="ph-bold ${m.ikon}"></i>${m.label}</span>` : '<span class="chip st-kosong">—</span>';
+};
+const inisial = nama => (String(nama || '?').trim()[0] || '?').toUpperCase();
+const namaDepan = nama => String(nama || '').trim().split(/\s+/)[0] || '';
+const persenHadir = r => r.hari_efektif ? Math.round(((r.hadir + r.terlambat) / r.hari_efektif) * 100) : null;
+
+/* ---------- Modal ---------- */
+function bukaModal(judul, isi, lebar = false) {
+  const m = document.createElement('div');
+  m.className = 'modal-latar';
+  m.innerHTML = `<div class="modal ${lebar ? 'lebar' : ''}" role="dialog" aria-modal="true" aria-label="${esc(judul)}">
+    <div class="modal-head"><h3>${esc(judul)}</h3><button class="ikon-btn" data-tutup aria-label="Tutup"><i class="ph-bold ph-x"></i></button></div>
+    <div class="modal-isi">${isi}</div></div>`;
+  m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-tutup]')) m.remove(); });
+  document.body.appendChild(m);
+  return m;
+}
+
+/* =====================================================================
+   BOOT, LOGIN, GANTI SANDI
+   ===================================================================== */
+async function mulai() {
+  if (!sb) return renderBelumKonfig();
+  if (!S.token) return renderLogin();
+  app.innerHTML = `<div class="hp"><div class="login" style="align-items:center"><i class="ph-bold ph-spinner putar" style="font-size:32px;color:var(--b500)"></i></div></div>`;
+  try { await muatBeranda(); masukAplikasi(); }
+  catch (e) { if (e.message !== 'SESI') renderLogin(e.message); }
+}
+
+async function muatBeranda() {
+  const b = await rpc('hk_beranda');
+  S.b = b; S.profil = b.profil;
+  S.zona = b.zona_waktu; S.label = b.label_zona;
+  S.offset = b.waktu_server - Date.now();
+}
+
+function masukAplikasi() {
+  if (S.profil.harus_ganti_password) return renderGantiWajib();
+  if (S.profil.peran === 'siswa') renderSiswa(); else renderStaf();
+}
+
+function keluarLokal() { S.token = null; S.b = null; S.profil = null; S.staf = { tab: null, kelas: null }; simpan.del('hk_token'); tutupLayarQR(); }
+async function keluar() {
+  try { await rpc('hk_keluar'); } catch (e) {}
+  keluarLokal(); renderLogin();
+}
+
+function renderBelumKonfig() {
+  document.body.className = 'mode-hp';
+  app.innerHTML = `<div class="hp"><div class="login">
+    <div class="logo"><i class="ph-bold ph-plugs"></i></div>
+    <h1>Belum terhubung</h1>
+    <p class="sub">Isi <b>SUPABASE_URL</b> dan <b>SUPABASE_ANON_KEY</b> di bagian atas skrip <code>index.html</code>, lalu muat ulang halaman.</p>
+    <div class="kredit">${esc(KONFIG.KREDIT)}</div></div></div>`;
+}
+
+function renderLogin(pesan = '') {
+  document.body.className = 'mode-hp';
+  app.innerHTML = `<div class="hp"><form class="login" id="f-login" autocomplete="on">
+    <div class="logo"><i class="ph-bold ph-qr-code"></i></div>
+    <h1>HadirKuy</h1>
+    <p class="sub">Absensi Digital ${esc(KONFIG.NAMA_MADRASAH)}</p>
+    <div class="galat" id="login-galat">${esc(pesan)}</div>
+    <div class="bidang"><label class="label" for="l-user">NISN / Username</label>
+      <input class="input" id="l-user" name="username" autocomplete="username" inputmode="text" required placeholder="Contoh: 0012345678"></div>
+    <div class="bidang"><label class="label" for="l-sandi">Kata Sandi</label>
+      <div class="sandi-wrap"><input class="input" id="l-sandi" type="password" name="password" autocomplete="current-password" required>
+      <button type="button" class="ikon-btn" id="l-lihat" aria-label="Tampilkan kata sandi"><i class="ph ph-eye"></i></button></div>
+      <p class="bantuan">Pertama kali masuk? Kata sandi awal sama dengan NISN. Kamu akan diminta menggantinya.</p></div>
+    <button class="btn btn-gelap btn-penuh" id="l-tombol" style="padding:15px;margin-top:6px">Masuk <i class="ph-bold ph-arrow-right"></i></button>
+    <div class="kredit" style="margin-top:28px">${esc(KONFIG.KREDIT)}</div>
+  </form></div>`;
+  $('#l-lihat').onclick = () => { const i = $('#l-sandi'); i.type = i.type === 'password' ? 'text' : 'password'; };
+  $('#f-login').onsubmit = async e => {
+    e.preventDefault();
+    const tombol = $('#l-tombol'), galat = $('#login-galat');
+    tombol.disabled = true; tombol.innerHTML = '<i class="ph-bold ph-spinner putar"></i> Memeriksa…'; galat.textContent = '';
+    try {
+      const r = await rpc('hk_masuk', { p_username: $('#l-user').value, p_password: $('#l-sandi').value }, false);
+      if (!r.ok) throw new Error(r.pesan);
+      S.token = r.token; simpan.set('hk_token', r.token);
+      await muatBeranda(); S.tab = 'beranda'; masukAplikasi();
+    } catch (err) {
+      if (err.message === 'SESI') return;
+      galat.textContent = err.message;
+      tombol.disabled = false; tombol.innerHTML = 'Masuk <i class="ph-bold ph-arrow-right"></i>';
+    }
+  };
+}
+
+function htmlFormSandi(id) {
+  return `<form id="${id}">
+    <div class="galat" id="${id}-galat"></div>
+    <div class="bidang"><label class="label">Kata sandi lama</label><input class="input" type="password" name="lama" autocomplete="current-password" required></div>
+    <div class="bidang"><label class="label">Kata sandi baru</label><input class="input" type="password" name="baru" autocomplete="new-password" minlength="6" required>
+      <p class="bantuan">Minimal 6 karakter dan tidak sama dengan NISN/username.</p></div>
+    <div class="bidang"><label class="label">Ulangi kata sandi baru</label><input class="input" type="password" name="ulang" autocomplete="new-password" required></div>
+    <button class="btn btn-gelap btn-penuh">Simpan Kata Sandi</button></form>`;
+}
+function pasangFormSandi(id, selesai) {
+  const f = $('#' + id);
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const g = $('#' + id + '-galat'), btn = f.querySelector('button');
+    g.textContent = '';
+    if (f.baru.value !== f.ulang.value) { g.textContent = 'Kata sandi baru dan ulangannya tidak sama.'; return; }
+    btn.disabled = true;
+    try { const p = await rpc('hk_ganti_password', { p_lama: f.lama.value, p_baru: f.baru.value }); S.profil = p; if (S.b) S.b.profil = p; selesai(); }
+    catch (err) { if (err.message !== 'SESI') g.textContent = err.message; btn.disabled = false; }
+  };
+}
+
+function renderGantiWajib() {
+  document.body.className = 'mode-hp';
+  app.innerHTML = `<div class="hp"><div class="login">
+    <div class="logo"><i class="ph-bold ph-lock-key"></i></div>
+    <h1>Buat kata sandi baru</h1>
+    <p class="sub">Halo, ${esc(namaDepan(S.profil.nama))}! Demi keamanan akunmu, ganti kata sandi awal terlebih dahulu.</p>
+    ${htmlFormSandi('f-wajib')}
+    <button class="btn btn-garis btn-penuh" style="margin-top:10px" id="w-keluar">Keluar</button>
+  </div></div>`;
+  pasangFormSandi('f-wajib', () => { toast('Kata sandi berhasil diganti.'); masukAplikasi(); });
+  $('#w-keluar').onclick = keluar;
+}
+
+/* =====================================================================
+   APLIKASI SISWA
+   ===================================================================== */
+function renderSiswa() {
+  document.body.className = 'mode-hp';
+  const nav = [['beranda', 'ph-house', 'Beranda'], ['riwayat', 'ph-calendar-check', 'Riwayat'], ['profil', 'ph-user', 'Profil']];
+  app.innerHTML = `<div class="hp" id="hp">
+    <header class="hp-head" id="hp-head"></header>
+    <main class="hp-main" id="hp-main"></main>
+    <nav class="hp-nav">${nav.map(([id, ik, lb]) => `<button data-tab="${id}"><i class="ph ${ik}"></i>${lb}</button>`).join('')}</nav>
+    <div id="lapisan"></div></div>`;
+  $$('.hp-nav button').forEach(b => b.onclick = () => gantiTabSiswa(b.dataset.tab));
+  gantiTabSiswa(S.tab || 'beranda', true);
+}
+
+async function gantiTabSiswa(tab, tanpaMuat = false) {
+  S.tab = tab;
+  $$('.hp-nav button').forEach(b => {
+    const aktif = b.dataset.tab === tab;
+    b.classList.toggle('aktif', aktif);
+    const i = b.querySelector('i'); i.className = i.className.replace(/\bph(-fill)?\b(?= )/, aktif ? 'ph-fill' : 'ph');
+  });
+  $('#hp-main').scrollTop = 0;
+  if (tab === 'beranda') {
+    tampilBeranda();
+    if (!tanpaMuat) { try { await muatBeranda(); if (S.tab === 'beranda') tampilBeranda(); } catch (e) {} }
+  } else if (tab === 'riwayat') {
+    S.bulan = S.bulan || bulanIni();
+    tampilRiwayatSiswa();
+  } else tampilProfilSiswa();
+}
+
+function htmlKepalaSiswa(judul) {
+  const p = S.profil;
+  if (judul) return `<div class="sapa"><h1>${esc(judul)}</h1></div>`;
+  return `<div class="sapa"><div><h1>Halo, ${esc(namaDepan(p.nama))}! 👋</h1>
+      <p class="muted tebal kecil" style="margin-top:3px" data-tgl></p></div>
+      <div class="avatar" aria-hidden="true">${esc(inisial(p.nama))}</div></div>
+    <div class="lokasi-chip"><i class="ph-fill ph-map-pin"></i>${esc(S.b.madrasah)}${p.kelas ? ' · ' + esc(p.kelas) : ''}</div>`;
+}
+
+function tampilBeranda() {
+  const b = S.b, a = b.absen, h = b.hari_ini, r = b.rekap_bulan || { hadir: 0, terlambat: 0, izin: 0, sakit: 0, alpa: 0, hari_efektif: 0 };
+  const jamKini = fmtJam(sekarang());
+  let badge = ['Belum Absen', ''], aksi = '';
+  const info = (ikon, judul, teks, warna = '') => `<div class="kartu-info ${warna}"><i class="ph-duotone ${ikon}"></i><div><h3>${esc(judul)}</h3><p>${esc(teks)}</p></div></div>`;
+  const tombol = jenis => `<button class="btn-scan" data-scan="${jenis}"><span class="ikn"><i class="ph-bold ph-qr-code"></i></span>Scan QR ${jenis === 'masuk' ? 'Masuk' : 'Pulang'}</button>`;
+
+  if (!h.hari_sekolah) {
+    badge = ['Libur', 'abu'];
+    aksi = info('ph-sun', h.libur ? `Hari ini libur: ${h.libur}` : 'Hari ini bukan hari sekolah', 'Selamat beristirahat dan habiskan waktu bersama keluarga.');
+  } else if (a && (a.status === 'izin' || a.status === 'sakit')) {
+    badge = [a.status === 'sakit' ? 'Sakit' : 'Izin', 'biru'];
+    aksi = info(a.status === 'sakit' ? 'ph-first-aid' : 'ph-envelope-simple',
+      a.status === 'sakit' ? 'Semoga lekas sembuh' : 'Izinmu sudah tercatat',
+      a.status === 'sakit' ? 'Istirahat yang cukup, ya. Teman-teman menunggumu kembali.' : 'Semoga urusanmu dimudahkan. Sampai jumpa di madrasah.');
+  } else if (a && a.jam_pulang) {
+    badge = ['Sudah Pulang', 'abu'];
+    aksi = info('ph-hand-waving', 'Terima kasih sudah hadir hari ini', 'Sampai jumpa besok. Hati-hati di jalan!');
+  } else if (a && a.jam_masuk) {
+    badge = ['Di Madrasah', 'hijau'];
+    aksi = jamKini < h.jam_pulang
+      ? tombol('pulang') + `<p class="petunjuk">Absen pulang dibuka pukul ${esc(h.jam_pulang)} ${esc(S.label)}</p>`
+      : (jamKini > h.jam_tutup_pulang
+          ? info('ph-clock-countdown', 'Absen pulang sudah ditutup', `Ditutup pukul ${h.jam_tutup_pulang} ${S.label}.`, 'oranye')
+          : tombol('pulang') + `<p class="petunjuk">Pindai QR Pulang di layar madrasah sebelum meninggalkan madrasah</p>`);
+  } else if (a && (a.status === 'hadir' || a.status === 'terlambat')) {
+    badge = ['Hadir', 'hijau'];
+    aksi = info('ph-check-circle', 'Kehadiranmu sudah dicatat wali kelas', a.keterangan || 'Selamat belajar!');
+  } else if (a && a.status === 'alpa') {
+    badge = ['Tidak Hadir', 'merah'];
+    aksi = info('ph-info', 'Tercatat tidak hadir hari ini', 'Jika ini keliru, sampaikan kepada wali kelasmu.', 'oranye');
+  } else if (jamKini > h.jam_tutup_masuk) {
+    badge = ['Belum Absen', 'merah'];
+    aksi = info('ph-clock-countdown', 'Absen masuk sudah ditutup', `Ditutup pukul ${h.jam_tutup_masuk} ${S.label}. Jika kamu hadir, temui wali kelas.`, 'oranye');
+  } else if (jamKini < h.jam_buka_masuk) {
+    aksi = info('ph-moon-stars', 'Absen masuk belum dibuka', `Dibuka pukul ${h.jam_buka_masuk} ${S.label}. Jangan lupa sarapan dan berdoa sebelum berangkat.`);
+  } else {
+    aksi = tombol('masuk') + `<p class="petunjuk">Tepat waktu sampai pukul ${esc(h.jam_masuk)} ${esc(S.label)}${h.toleransi_menit ? ` (toleransi ${h.toleransi_menit} menit)` : ''}</p>`;
+  }
+
+  const pct = persenHadir(r);
+  $('#hp-head').innerHTML = htmlKepalaSiswa();
+  $('#hp-main').innerHTML = `
+    <section class="kartu-status">
+      <div class="ks-atas"><h2>Status Kehadiran</h2><span class="badge ${badge[1]}">${esc(badge[0])}</span></div>
+      <div class="ks-jam">
+        <div class="ks-kotak"><div class="lbl"><i class="ph-bold ph-sign-in"></i>Masuk</div>
+          <div class="nilai ${a && a.jam_masuk ? '' : 'redup'}">${esc(a && a.jam_masuk || '--:--')}</div>
+          ${a && a.status === 'terlambat' && a.menit_terlambat ? `<div class="sub">terlambat ${a.menit_terlambat} mnt</div>` : ''}</div>
+        <div class="ks-kotak"><div class="lbl"><i class="ph-bold ph-sign-out"></i>Pulang</div>
+          <div class="nilai ${a && a.jam_pulang ? '' : 'redup'}">${esc(a && a.jam_pulang || '--:--')}</div></div>
+      </div>
+      <div class="ks-info"><i class="ph-bold ph-clock"></i>Jam madrasah&nbsp;<span class="jam-live" data-jam></span></div>
+    </section>
+    ${aksi}
+    <section>
+      <div class="judul-seksi"><h3>Bulan Ini</h3><button class="tautan" data-ke="riwayat">Detail <i class="ph-bold ph-caret-right"></i></button></div>
+      <div class="statistik">
+        <div class="stat hijau"><div class="atas"><span class="ikn"><i class="ph-bold ph-check-circle"></i></span><span class="angka">${r.hadir}</span></div><span class="nama">Hadir</span></div>
+        <div class="stat oranye"><div class="atas"><span class="ikn"><i class="ph-bold ph-clock"></i></span><span class="angka">${r.terlambat}</span></div><span class="nama">Terlambat</span></div>
+        <div class="stat biru"><div class="atas"><span class="ikn"><i class="ph-bold ph-file-text"></i></span><span class="angka">${r.izin + r.sakit}</span></div><span class="nama">Izin/Sakit</span></div>
+        <div class="stat merah"><div class="atas"><span class="ikn"><i class="ph-bold ph-x-circle"></i></span><span class="angka">${r.alpa}</span></div><span class="nama">Alpa</span></div>
+      </div>
+      ${pct !== null ? `<p class="persen-hadir">Kehadiran ${pct}% dari ${r.hari_efektif} hari efektif</p>` : ''}
+    </section>`;
+  detak();
+  $$('[data-scan]').forEach(x => x.onclick = () => bukaScanner(x.dataset.scan));
+  $$('[data-ke]').forEach(x => x.onclick = () => gantiTabSiswa(x.dataset.ke));
+}
+
+/* ---------- Riwayat (dipakai siswa & staf) ---------- */
+function htmlNavBulan(bulan) {
+  const kini = bulanIni();
+  const bisaMaju = bulan.y < kini.y || (bulan.y === kini.y && bulan.m < kini.m);
+  return `<div class="nav-bulan">
+    <button class="ikon-btn" data-geser="-1" aria-label="Bulan sebelumnya"><i class="ph-bold ph-caret-left"></i></button>
+    <b>${BULAN[bulan.m - 1]} ${bulan.y}</b>
+    <button class="ikon-btn" data-geser="1" aria-label="Bulan berikutnya" ${bisaMaju ? '' : 'disabled'}><i class="ph-bold ph-caret-right"></i></button></div>`;
+}
+function geserBulan(bulan, n) {
+  let m = bulan.m + n, y = bulan.y;
+  if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; }
+  return { y, m };
+}
+function htmlRiwayat(d) {
+  const r = d.rekap, pct = persenHadir(r);
+  const sel = (n, lb, cls) => `<div class="${cls}"><b>${n}</b><span>${lb}</span></div>`;
+  const hari = d.hari.map(h => {
+    let kiri;
+    if (h.status) kiri = chip(h.status);
+    else if (h.libur) kiri = `<span class="chip st-libur">${esc(h.libur)}</span>`;
+    else if (!h.hari_sekolah) kiri = '<span class="chip st-libur">Libur</span>';
+    else kiri = chip(null);
+    const jam = (h.jam_masuk || h.jam_pulang)
+      ? `<span class="hari-jam">${esc(h.jam_masuk || '--:--')} – ${esc(h.jam_pulang || '--:--')}${h.menit_terlambat ? ` · ${h.menit_terlambat} mnt` : ''}</span>` : '';
+    const ket = h.keterangan ? `<span class="hari-jam">${esc(h.keterangan)}</span>` : '';
+    return `<div class="hari ${(!h.hari_sekolah || h.libur) && !h.status ? 'redup' : ''}"><div class="hari-tgl">${fmtTglPendek(h.tanggal)}</div><div class="hari-kanan">${kiri}${jam}${ket}</div></div>`;
+  }).join('');
+  return `<div class="rekap-mini">
+      ${sel(r.hadir, 'Hadir', 'st-hadir')}${sel(r.terlambat, 'Telat', 'st-terlambat')}${sel(r.izin, 'Izin', 'st-izin')}${sel(r.sakit, 'Sakit', 'st-sakit')}${sel(r.alpa, 'Alpa', 'st-alpa')}
+    </div>
+    ${pct !== null ? `<p class="persen-hadir" style="margin:-6px 0 14px">Kehadiran ${pct}% dari ${r.hari_efektif} hari efektif</p>` : ''}
+    <div class="daftar-hari">${hari || '<div class="kosong"><i class="ph ph-calendar-blank"></i>Belum ada data bulan ini</div>'}</div>`;
+}
+
+async function tampilRiwayatSiswa() {
+  $('#hp-head').innerHTML = htmlKepalaSiswa('Riwayat Kehadiran');
+  const main = $('#hp-main');
+  main.innerHTML = htmlNavBulan(S.bulan) + '<div id="riw-isi"><div class="kosong"><i class="ph-bold ph-spinner putar"></i>Memuat…</div></div>';
+  $$('[data-geser]', main).forEach(x => x.onclick = () => { S.bulan = geserBulan(S.bulan, +x.dataset.geser); tampilRiwayatSiswa(); });
+  try {
+    const d = await rpc('hk_riwayat_saya', { p_tahun: S.bulan.y, p_bulan: S.bulan.m });
+    if (S.tab === 'riwayat') $('#riw-isi').innerHTML = htmlRiwayat(d);
+  } catch (e) { if (e.message !== 'SESI') $('#riw-isi').innerHTML = `<div class="galat">${esc(e.message)}</div>`; }
+}
+
+function tampilProfilSiswa() {
+  const p = S.profil;
+  $('#hp-head').innerHTML = htmlKepalaSiswa('Profil');
+  $('#hp-main').innerHTML = `
+    <div class="profil-kepala"><div class="avatar besar" style="margin:0 auto">${esc(inisial(p.nama))}</div><h2>${esc(p.nama)}</h2><p class="muted tebal kecil">${esc(S.b.madrasah)}</p></div>
+    <div class="daftar-info">
+      <div><span>NISN</span><b>${esc(p.username)}</b></div>
+      <div><span>Kelas</span><b>${esc(p.kelas || '—')}</b></div>
+      <div><span>Zona waktu</span><b>${esc(S.label)}</b></div>
+    </div>
+    <button class="btn btn-garis btn-penuh" id="p-sandi" style="margin-bottom:10px"><i class="ph-bold ph-lock-key"></i>Ganti Kata Sandi</button>
+    <button class="btn btn-bahaya btn-penuh" id="p-keluar"><i class="ph-bold ph-sign-out"></i>Keluar</button>
+    <div class="kredit">${esc(KONFIG.KREDIT)}</div>`;
+  $('#p-sandi').onclick = modalGantiSandi;
+  $('#p-keluar').onclick = () => { if (confirm('Keluar dari HadirKuy?')) keluar(); };
+}
+
+function modalGantiSandi() {
+  const m = bukaModal('Ganti Kata Sandi', htmlFormSandi('f-sandi'));
+  pasangFormSandi('f-sandi', () => { m.remove(); toast('Kata sandi berhasil diganti.'); });
+}
+
+/* ---------- Pemindai QR + lokasi ---------- */
+let pemindai = null, sedangProses = false, janjiLokasi = null;
+
+function ambilLokasi() {
+  return new Promise(res => {
+    if (!navigator.geolocation) return res({ ok: false, alasan: 'perangkat tidak mendukung GPS' });
+    navigator.geolocation.getCurrentPosition(
+      p => res({ ok: true, lat: p.coords.latitude, lng: p.coords.longitude, akurasi: Math.round(p.coords.accuracy) }),
+      e => res({ ok: false, alasan: e.code === 1 ? 'izin lokasi ditolak' : e.code === 3 ? 'waktu habis' : 'sinyal GPS lemah' }),
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 20000 });
+  });
+}
+
+async function hentikanPemindai() {
+  const p = pemindai; pemindai = null;
+  if (!p) return;
+  try { if (p.isScanning) await p.stop(); } catch (e) {}
+  try { p.clear(); } catch (e) {}
+}
+
+async function bukaScanner(jenis) {
+  S.jenisScan = jenis; sedangProses = false;
+  const lap = $('#lapisan');
+  lap.innerHTML = `<div class="lapis gelap" id="ov-scan">
+    <div class="lapis-head"><button class="ikon-btn" id="sc-tutup" aria-label="Tutup"><i class="ph-bold ph-x"></i></button>
+      <h3>Scan QR ${jenis === 'masuk' ? 'Masuk' : 'Pulang'}</h3><span style="width:38px"></span></div>
+    <div class="area-scan">
+      <p>Arahkan kamera ke QR Code yang tampil di layar madrasah.</p>
+      <div class="bingkai" id="bingkai"><div id="reader"></div><div class="garis-scan"></div><div class="sudut"><span></span></div></div>
+      <div class="status-scan" id="sc-status"><i class="ph-bold ph-spinner putar"></i>Membaca lokasi…</div>
+    </div></div>`;
+  $('#sc-tutup').onclick = tutupLapisan;
+
+  janjiLokasi = ambilLokasi();
+  janjiLokasi.then(l => {
+    const st = $('#sc-status'); if (!st || sedangProses) return;
+    if (l.ok) { st.className = 'status-scan ok'; st.innerHTML = `<i class="ph-fill ph-map-pin"></i>Lokasi terbaca (akurasi ±${l.akurasi} m)`; }
+    else { st.className = 'status-scan warn'; st.innerHTML = `<i class="ph-bold ph-warning"></i>Lokasi belum terbaca: ${esc(l.alasan)}`; }
+  });
+
+  if (!window.Html5Qrcode) return tampilHasil(false, 'Komponen pemindai gagal dimuat. Periksa koneksi internet lalu muat ulang aplikasi.');
+  try {
+    pemindai = new Html5Qrcode('reader');
+    await pemindai.start({ facingMode: 'environment' },
+      { fps: 10, qrbox: (w, h) => { const s = Math.floor(Math.min(w, h) * 0.8); return { width: s, height: s }; } },
+      teks => prosesQR(teks), () => {});
+  } catch (e) {
+    await hentikanPemindai();
+    tampilHasil(false, location.protocol !== 'https:' && location.hostname !== 'localhost'
+      ? 'Kamera hanya bisa dipakai bila aplikasi dibuka lewat alamat https://.'
+      : 'Kamera tidak dapat dibuka. Izinkan akses kamera untuk situs ini di pengaturan browser, lalu coba lagi.');
+  }
+}
+
+async function prosesQR(teks) {
+  if (sedangProses) return;
+  sedangProses = true;
+  if (navigator.vibrate) navigator.vibrate(60);
+  const bk = $('#bingkai'); if (bk) bk.classList.add('proses');
+  const st = $('#sc-status'); if (st) { st.className = 'status-scan'; st.innerHTML = '<i class="ph-bold ph-spinner putar"></i>Memproses…'; }
+  await hentikanPemindai();
+
+  let lok = await janjiLokasi;
+  if (!lok.ok && S.b.wajib_lokasi) lok = await ambilLokasi();
+  if (!lok.ok && S.b.wajib_lokasi) {
+    return tampilHasil(false, `Lokasi tidak terbaca (${lok.alasan}). Aktifkan GPS dan izinkan akses lokasi untuk browser ini, lalu coba lagi.`);
+  }
+  try {
+    const r = await rpc('hk_absen', { p_qr: teks, p_lat: lok.ok ? lok.lat : null, p_lng: lok.ok ? lok.lng : null });
+    try { await muatBeranda(); } catch (e) {}
+    tampilHasil(true, pesanSukses(r));
+  } catch (e) {
+    if (e.message !== 'SESI') tampilHasil(false, e.message);
+  }
+}
+
+function pesanSukses(r) {
+  if (r.jenis === 'masuk') {
+    return r.status === 'terlambat'
+      ? `Alhamdulillah, kamu sudah sampai. Absen masuk tercatat pukul ${r.jam} ${r.label_zona} (terlambat ${r.menit_terlambat} menit). Besok berangkat sedikit lebih awal, ya!`
+      : `Absen masuk tercatat pukul ${r.jam} ${r.label_zona}. Selamat belajar, semoga ilmunya berkah!`;
+  }
+  return `Absen pulang tercatat pukul ${r.jam} ${r.label_zona}. Terima kasih sudah belajar hari ini. Hati-hati di jalan!`;
+}
+
+function tampilHasil(ok, pesan) {
+  const lap = $('#lapisan'); if (!lap) return;
+  lap.innerHTML = `<div class="lapis terang">
+    <div class="hasil-ikon ${ok ? 'ok' : 'gagal'}"><i class="ph-fill ${ok ? 'ph-check-circle' : 'ph-warning-circle'}"></i></div>
+    <h2>${ok ? 'Berhasil!' : 'Belum Berhasil'}</h2>
+    <p>${esc(pesan)}</p>
+    <div class="tombol">
+      ${ok ? '' : '<button class="btn btn-brand btn-penuh" id="h-ulang" style="padding:15px"><i class="ph-bold ph-arrow-clockwise"></i>Coba Lagi</button>'}
+      <button class="btn btn-gelap btn-penuh" id="h-kembali" style="padding:15px">Kembali ke Beranda</button>
+    </div></div>`;
+  $('#h-kembali').onclick = tutupLapisan;
+  if (!ok) $('#h-ulang').onclick = () => bukaScanner(S.jenisScan);
+}
+
+async function tutupLapisan() {
+  await hentikanPemindai();
+  const lap = $('#lapisan'); if (lap) lap.innerHTML = '';
+  if (S.profil && S.profil.peran === 'siswa') gantiTabSiswa('beranda', true);
+}
+
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || !S.token || !S.profil || S.profil.peran !== 'siswa') return;
+  if (S.tab !== 'beranda' || ($('#lapisan') && $('#lapisan').innerHTML)) return;
+  try { await muatBeranda(); if (S.tab === 'beranda') tampilBeranda(); } catch (e) {}
+});
+
+/* =====================================================================
+   APLIKASI STAF (wali kelas, BK, kepala, petugas, admin)
+   ===================================================================== */
+const TAB_STAF = {
+  harian:     { label: 'Hari Ini',       ikon: 'ph-list-checks' },
+  bulanan:    { label: 'Rekap Bulanan',  ikon: 'ph-chart-bar' },
+  layar:      { label: 'Layar QR',       ikon: 'ph-qr-code' },
+  pengguna:   { label: 'Pengguna',       ikon: 'ph-users-three' },
+  kelas:      { label: 'Kelas',          ikon: 'ph-chalkboard-teacher' },
+  pengaturan: { label: 'Pengaturan',     ikon: 'ph-gear-six' },
+  akun:       { label: 'Akun',           ikon: 'ph-user-circle' },
+};
+function tabUntuk(peran) {
+  if (peran === 'admin') return ['harian', 'bulanan', 'layar', 'pengguna', 'kelas', 'pengaturan', 'akun'];
+  if (peran === 'petugas') return ['layar', 'akun'];
+  return ['harian', 'bulanan', 'akun'];
+}
+const bolehUbahAbsen = () => ['admin', 'wali'].includes(S.profil.peran);
+
+function renderStaf() {
+  document.body.className = 'mode-staf';
+  const tabs = tabUntuk(S.profil.peran);
+  if (!tabs.includes(S.staf.tab)) S.staf.tab = tabs[0];
+  app.innerHTML = `<div class="staf">
+    <header class="staf-head">
+      <div class="merek"><div class="logo"><i class="ph-bold ph-qr-code"></i></div><div><b>HadirKuy</b><small>${esc(S.b.madrasah)}</small></div></div>
+      <div class="staf-user"><span class="chip st-belum jam-live" data-jam></span>
+        <div class="nm"><b>${esc(S.profil.nama)}</b><span>${esc(PERAN[S.profil.peran])}</span></div>
+        <div class="avatar" style="width:40px;height:40px;font-size:15px">${esc(inisial(S.profil.nama))}</div></div>
+    </header>
+    <nav class="staf-tabs">${tabs.map(t => `<button data-stab="${t}"><i class="ph-bold ${TAB_STAF[t].ikon}"></i>${TAB_STAF[t].label}</button>`).join('')}</nav>
+    <main class="staf-main" id="staf-main"></main>
+    <div class="kredit">${esc(KONFIG.KREDIT)}</div>
+  </div><div id="lapisan-staf"></div>`;
+  $$('[data-stab]').forEach(b => b.onclick = () => { S.staf.tab = b.dataset.stab; tampilTabStaf(); });
+  detak();
+  tampilTabStaf();
+}
+
+function tampilTabStaf() {
+  $$('[data-stab]').forEach(b => b.classList.toggle('aktif', b.dataset.stab === S.staf.tab));
+  const main = $('#staf-main');
+  main.innerHTML = '<div class="kosong"><i class="ph-bold ph-spinner putar"></i>Memuat…</div>';
+  const peta = { harian: tabHarian, bulanan: tabBulanan, layar: tabLayar, pengguna: tabPengguna, kelas: tabKelas, pengaturan: tabPengaturan, akun: tabAkun };
+  peta[S.staf.tab](main).catch(e => { if (e.message !== 'SESI') main.innerHTML = `<div class="galat">${esc(e.message)}</div>`; });
+}
+
+async function pastikanKelas(paksa = false) {
+  if (!S.staf.kelas || paksa) S.staf.kelas = await rpc('hk_kelas_daftar');
+  return S.staf.kelas;
+}
+function opsiKelas(terpilih, denganSemua) {
+  const k = S.staf.kelas || [];
+  return (denganSemua ? `<option value="">Semua kelas</option>` : '') +
+    k.map(x => `<option value="${x.id}" ${String(terpilih) === String(x.id) ? 'selected' : ''}>${esc(x.nama)}</option>`).join('');
+}
+function pesanTanpaKelas() {
+  return `<div class="panel"><div class="kosong"><i class="ph ph-chalkboard"></i>Anda belum ditetapkan sebagai wali kelas mana pun.<br>Hubungi admin madrasah.</div></div>`;
+}
+
+/* ---------- Tab: Hari Ini ---------- */
+async function tabHarian(main) {
+  await pastikanKelas();
+  const st = S.staf, wali = S.profil.peran === 'wali';
+  if (wali && !st.kelas.length) { main.innerHTML = pesanTanpaKelas(); return; }
+  st.tgl = st.tgl || tglISO(sekarang());
+  if (st.kelasHarian === undefined) st.kelasHarian = wali ? String(st.kelas[0].id) : '';
+  main.innerHTML = `<div class="panel">
+    <div class="panel-kepala"><div><h2>Kehadiran Harian</h2><p class="muted kecil">Status otomatis dari scan QR. ${bolehUbahAbsen() ? 'Klik baris untuk mencatat izin, sakit, atau koreksi.' : ''}</p></div></div>
+    <div class="filter">
+      <div class="bidang"><label class="label">Tanggal</label><input type="date" class="input input-kecil" id="h-tgl" value="${st.tgl}" max="${tglISO(sekarang())}"></div>
+      <div class="bidang"><label class="label">Kelas</label><select class="input input-kecil" id="h-kelas">${opsiKelas(st.kelasHarian, !wali)}</select></div>
+      <div class="bidang" style="flex:1"><label class="label">Cari siswa</label><input class="input input-kecil" id="h-cari" placeholder="Nama atau NISN"></div>
+      <button class="btn btn-garis btn-kecil" id="h-muat" style="height:40px"><i class="ph-bold ph-arrow-clockwise"></i>Muat ulang</button>
+    </div></div>
+    <div class="panel" id="h-isi"><div class="kosong"><i class="ph-bold ph-spinner putar"></i>Memuat…</div></div>`;
+  $('#h-tgl').onchange = e => { st.tgl = e.target.value; muatHarian(); };
+  $('#h-kelas').onchange = e => { st.kelasHarian = e.target.value; muatHarian(); };
+  $('#h-muat').onclick = muatHarian;
+  $('#h-cari').oninput = renderHarian;
+  await muatHarian();
+}
+async function muatHarian() {
+  const st = S.staf, isi = $('#h-isi'); if (!isi) return;
+  isi.innerHTML = '<div class="kosong"><i class="ph-bold ph-spinner putar"></i>Memuat…</div>';
+  try {
+    st.harian = await rpc('hk_rekap_harian', { p_tanggal: st.tgl, p_kelas_id: st.kelasHarian ? Number(st.kelasHarian) : null });
+    renderHarian();
+  } catch (e) { if (e.message !== 'SESI') isi.innerHTML = `<div class="galat">${esc(e.message)}</div>`; }
+}
+function renderHarian() {
+  const d = S.staf.harian, isi = $('#h-isi'); if (!d || !isi) return;
+  const q = ($('#h-cari')?.value || '').toLowerCase().trim();
+  const hit = {}; d.siswa.forEach(s => hit[s.status || 'x'] = (hit[s.status || 'x'] || 0) + 1);
+  const daftar = d.siswa.filter(s => !q || s.nama.toLowerCase().includes(q) || s.nisn.includes(q));
+  const ubah = bolehUbahAbsen();
+  let banner = '';
+  if (!d.efektif) banner = `<div class="banner info"><i class="ph-bold ph-sun"></i>${d.libur ? 'Hari libur: ' + esc(d.libur) : 'Bukan hari sekolah'}. Siswa tidak dihitung alpa.</div>`;
+  isi.innerHTML = `${banner}
+    <div class="ringkas">${['hadir', 'terlambat', 'izin', 'sakit', 'alpa', 'belum'].map(k => hit[k] ? `<span class="chip ${STATUS[k].cls}">${STATUS[k].label}: ${hit[k]}</span>` : '').join('')}
+      <span class="chip st-libur">Total: ${d.siswa.length} siswa</span></div>
+    ${daftar.length ? `<div class="tabel-wrap"><table>
+      <thead><tr><th>No</th><th>Nama</th><th>Kelas</th><th>Status</th><th class="angka">Masuk</th><th class="angka">Pulang</th><th>Keterangan</th></tr></thead>
+      <tbody>${daftar.map((s, i) => `<tr class="${ubah ? 'klik' : ''}" data-sid="${s.id}">
+        <td class="muted">${i + 1}</td>
+        <td><b>${esc(s.nama)}</b><div class="muted kecil">${esc(s.nisn)}</div></td>
+        <td>${esc(s.kelas || '—')}</td>
+        <td>${chip(s.status)}${s.menit_terlambat ? `<div class="muted kecil">${s.menit_terlambat} menit</div>` : ''}</td>
+        <td class="angka">${esc(s.jam_masuk || '—')}</td><td class="angka">${esc(s.jam_pulang || '—')}</td>
+        <td class="kecil">${esc(s.keterangan || '')}${s.sumber === 'manual' ? ' <span class="muted">(manual)</span>' : ''}</td></tr>`).join('')}</tbody></table></div>`
+      : `<div class="kosong"><i class="ph ph-users"></i>${d.siswa.length ? 'Tidak ada siswa yang cocok dengan pencarian.' : 'Belum ada siswa di kelas ini.'}</div>`}`;
+  if (ubah) $$('tr[data-sid]', isi).forEach(tr => tr.onclick = () => modalAbsenManual(d.siswa.find(s => String(s.id) === tr.dataset.sid), d.tanggal));
+}
+
+function modalAbsenManual(s, tanggal) {
+  const opsi = [['hadir', 'Hadir'], ['terlambat', 'Terlambat'], ['izin', 'Izin'], ['sakit', 'Sakit'], ['alpa', 'Alpa (tanpa keterangan)'], ['reset', 'Hapus catatan (kembalikan otomatis)']];
+  const m = bukaModal('Catat Kehadiran', `<form id="f-manual">
+    <div class="galat" id="fm-galat"></div>
+    <p style="margin-bottom:14px"><b>${esc(s.nama)}</b> · ${esc(s.kelas || '')}<br><span class="muted kecil">NISN ${esc(s.nisn)}</span></p>
+    <div class="grid2">
+      <div class="bidang"><label class="label">Tanggal</label><input type="date" class="input" name="tgl" value="${tanggal}" required>
+        <p class="bantuan">Izin/sakit boleh diisi untuk hari mendatang.</p></div>
+      <div class="bidang"><label class="label">Status</label><select class="input" name="status">${opsi.map(([v, l]) => `<option value="${v}" ${s.status === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    </div>
+    <div class="bidang"><label class="label">Keterangan</label><input class="input" name="ket" maxlength="200" value="${esc(s.keterangan || '')}" placeholder="Contoh: Surat dari orang tua, demam"></div>
+    <div class="modal-aksi"><button type="button" class="btn btn-garis" data-tutup>Batal</button><button class="btn btn-gelap">Simpan</button></div></form>`);
+  const f = $('#f-manual', m);
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const btn = f.querySelector('button:not([data-tutup])'); btn.disabled = true;
+    try {
+      await rpc('hk_absen_manual', { p_siswa: s.id, p_tanggal: f.tgl.value, p_status: f.status.value, p_keterangan: f.ket.value });
+      m.remove(); toast('Kehadiran tersimpan.'); muatHarian();
+    } catch (err) { if (err.message !== 'SESI') $('#fm-galat', m).textContent = err.message; btn.disabled = false; }
+  };
+}
+
+/* ---------- Tab: Rekap Bulanan ---------- */
+async function tabBulanan(main) {
+  await pastikanKelas();
+  const st = S.staf;
+  if (!st.kelas.length) { main.innerHTML = S.profil.peran === 'wali' ? pesanTanpaKelas() : '<div class="panel"><div class="kosong"><i class="ph ph-chalkboard"></i>Belum ada kelas. Tambahkan di menu Kelas atau impor siswa.</div></div>'; return; }
+  st.kelasBulan = st.kelasBulan || String(st.kelas[0].id);
+  st.bulanRekap = st.bulanRekap || bulanIni();
+  const nilaiBulan = `${st.bulanRekap.y}-${String(st.bulanRekap.m).padStart(2, '0')}`;
+  main.innerHTML = `<div class="panel">
+    <div class="panel-kepala"><div><h2>Rekap Bulanan per Kelas</h2><p class="muted kecil">Klik nama siswa untuk melihat riwayat hariannya.</p></div>
+      <button class="btn btn-garis btn-kecil" id="b-csv"><i class="ph-bold ph-download-simple"></i>Unduh CSV</button></div>
+    <div class="filter">
+      <div class="bidang"><label class="label">Kelas</label><select class="input input-kecil" id="b-kelas">${opsiKelas(st.kelasBulan, false)}</select></div>
+      <div class="bidang"><label class="label">Bulan</label><input type="month" class="input input-kecil" id="b-bulan" value="${nilaiBulan}" max="${tglISO(sekarang()).slice(0, 7)}"></div>
+    </div></div>
+    <div class="panel" id="b-isi"><div class="kosong"><i class="ph-bold ph-spinner putar"></i>Memuat…</div></div>`;
+  $('#b-kelas').onchange = e => { st.kelasBulan = e.target.value; muatBulanan(); };
+  $('#b-bulan').onchange = e => { const [y, m] = e.target.value.split('-').map(Number); if (y && m) { st.bulanRekap = { y, m }; muatBulanan(); } };
+  $('#b-csv').onclick = unduhCSVBulanan;
+  await muatBulanan();
+}
+async function muatBulanan() {
+  const st = S.staf, isi = $('#b-isi'); if (!isi) return;
+  isi.innerHTML = '<div class="kosong"><i class="ph-bold ph-spinner putar"></i>Memuat…</div>';
+  try {
+    const d = st.bulanan = await rpc('hk_rekap_bulanan', { p_kelas_id: Number(st.kelasBulan), p_tahun: st.bulanRekap.y, p_bulan: st.bulanRekap.m });
+    if (!d.siswa.length) { isi.innerHTML = '<div class="kosong"><i class="ph ph-users"></i>Belum ada siswa di kelas ini.</div>'; return; }
+    isi.innerHTML = `<h3>${esc(d.kelas)} · ${BULAN[d.bulan - 1]} ${d.tahun}</h3>
+      <div class="tabel-wrap"><table><thead><tr><th>No</th><th>Nama</th><th class="angka">Hadir</th><th class="angka">Terlambat</th><th class="angka">Izin</th><th class="angka">Sakit</th><th class="angka">Alpa</th><th class="angka">Kehadiran</th><th></th></tr></thead>
+      <tbody>${d.siswa.map((s, i) => { const r = s.rekap, p = persenHadir(r); return `<tr class="klik" data-sid="${s.id}">
+        <td class="muted">${i + 1}</td><td><b>${esc(s.nama)}</b><div class="muted kecil">${esc(s.nisn)}</div></td>
+        <td class="angka">${r.hadir}</td><td class="angka">${r.terlambat}</td><td class="angka">${r.izin}</td><td class="angka">${r.sakit}</td><td class="angka">${r.alpa}</td>
+        <td class="angka tebal">${p === null ? '—' : p + '%'}</td>
+        <td>${r.alpa >= 3 ? '<span class="perlu" title="Alpa 3 hari atau lebih — sapa dan tanyakan kabarnya"><i class="ph-bold ph-hand-heart"></i>Perlu disapa</span>' : ''}</td></tr>`; }).join('')}</tbody></table></div>
+      <p class="muted kecil" style="margin-top:10px">Kehadiran = (hadir + terlambat) ÷ hari efektif yang sudah berjalan. Tanda "Perlu disapa" muncul bila alpa ≥ 3 hari.</p>`;
+    $$('tr[data-sid]', isi).forEach(tr => tr.onclick = () => modalRiwayatSiswa(d.siswa.find(s => String(s.id) === tr.dataset.sid)));
+  } catch (e) { if (e.message !== 'SESI') isi.innerHTML = `<div class="galat">${esc(e.message)}</div>`; }
+}
+function unduhCSVBulanan() {
+  const d = S.staf.bulanan; if (!d || !d.siswa.length) return toast('Tidak ada data untuk diunduh.', true);
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const baris = [['No', 'NISN', 'Nama', 'Hadir', 'Terlambat', 'Izin', 'Sakit', 'Alpa', 'Hari Efektif', 'Kehadiran (%)'].map(q).join(',')];
+  d.siswa.forEach((s, i) => { const r = s.rekap, p = persenHadir(r); baris.push([i + 1, s.nisn, s.nama, r.hadir, r.terlambat, r.izin, r.sakit, r.alpa, r.hari_efektif, p ?? ''].map(q).join(',')); });
+  const blob = new Blob(['﻿' + baris.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Rekap_${d.kelas}_${BULAN[d.bulan - 1]}_${d.tahun}.csv`.replace(/\s+/g, '_');
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function modalRiwayatSiswa(s) {
+  let bulan = { ...S.staf.bulanRekap };
+  const m = bukaModal(s.nama, '<div id="mr-isi"></div>', true);
+  const muat = async () => {
+    const isi = $('#mr-isi', m);
+    isi.innerHTML = htmlNavBulan(bulan) + '<div id="mr-data"><div class="kosong"><i class="ph-bold ph-spinner putar"></i>Memuat…</div></div>';
+    $$('[data-geser]', isi).forEach(x => x.onclick = () => { bulan = geserBulan(bulan, +x.dataset.geser); muat(); });
+    try { const d = await rpc('hk_riwayat_siswa', { p_siswa: s.id, p_tahun: bulan.y, p_bulan: bulan.m }); $('#mr-data', m).innerHTML = htmlRiwayat(d); }
+    catch (e) { if (e.message !== 'SESI') $('#mr-data', m).innerHTML = `<div class="galat">${esc(e.message)}</div>`; }
+  };
+  muat();
+}
+
+/* ---------- Tab: Layar QR ---------- */
+async function tabLayar(main) {
+  main.innerHTML = `<div class="panel">
+    <h2>Layar QR Absensi</h2>
+    <p class="muted" style="margin:6px 0 16px">Tampilkan di laptop/TV/tablet dekat gerbang. QR berganti otomatis setiap beberapa detik dan ditandatangani server, sehingga foto QR yang disebar tidak bisa dipakai dari luar madrasah.</p>
+    <div class="grid3" style="margin-bottom:18px">
+      <div class="banner info" style="margin:0"><i class="ph-bold ph-arrows-clockwise"></i>QR dinamis berganti otomatis</div>
+      <div class="banner info" style="margin:0"><i class="ph-bold ph-clock"></i>Mode otomatis: Masuk ⇄ Pulang sesuai jam</div>
+      <div class="banner info" style="margin:0"><i class="ph-bold ph-monitor"></i>Layar tetap menyala (bila didukung)</div>
+    </div>
+    <button class="btn btn-brand" id="lq-buka" style="padding:15px 22px"><i class="ph-bold ph-projector-screen"></i>Buka Layar QR</button>
+  </div>`;
+  $('#lq-buka').onclick = bukaLayarQR;
+}
+
+const layar = { aktif: false, timer: null, jenis: 'otomatis', wake: null };
+function svgQR(teks) {
+  const q = qrcode(0, 'M'); q.addData(teks); q.make();
+  const n = q.getModuleCount(), m = 2; let p = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) p += `M${c + m} ${r + m}h1v1h-1z`;
+  return `<svg viewBox="0 0 ${n + 2 * m} ${n + 2 * m}" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QR Code absensi"><rect width="100%" height="100%" fill="#fff"/><path d="${p}" fill="#0f172a"/></svg>`;
+}
+async function bukaLayarQR() {
+  if (!window.qrcode) return toast('Komponen QR gagal dimuat. Periksa koneksi internet.', true);
+  layar.aktif = true;
+  $('#lapisan-staf').innerHTML = `<div class="layar-qr">
+    <div class="lq-atas"><div><div class="lq-madrasah">${esc(S.b.madrasah)}</div><div class="lq-tgl" data-tgl></div></div><div class="lq-jam" data-jam-detik></div></div>
+    <div class="lq-tengah">
+      <div class="lq-jenis" id="lq-jenis">ABSEN MASUK</div>
+      <div class="lq-qr" id="lq-qr"><i class="ph-bold ph-spinner putar" style="font-size:40px"></i></div>
+      <div class="lq-bar"><div id="lq-bar"></div></div>
+      <div class="lq-petunjuk">Buka <b>HadirKuy</b> → tekan <b>Scan QR</b> → arahkan kamera ke kode ini</div>
+    </div>
+    <div class="lq-bawah">
+      <div class="lq-stat"><span><b id="lq-masuk">0</b>sudah masuk</span><span><b id="lq-pulang">0</b>sudah pulang</span></div>
+      <div class="lq-kontrol">
+        <select id="lq-pilih" aria-label="Jenis QR"><option value="otomatis">Otomatis</option><option value="masuk">Masuk</option><option value="pulang">Pulang</option></select>
+        <button id="lq-penuh"><i class="ph-bold ph-corners-out"></i> Layar penuh</button>
+        <button id="lq-tutup"><i class="ph-bold ph-x"></i> Tutup</button>
+      </div>
+    </div>
+    <div class="lq-kredit">${esc(KONFIG.KREDIT)}</div>
+  </div>`;
+  detak();
+  $('#lq-pilih').value = layar.jenis;
+  $('#lq-pilih').onchange = e => { layar.jenis = e.target.value; muatQR(); };
+  $('#lq-penuh').onclick = () => { const el = document.documentElement; if (!document.fullscreenElement) el.requestFullscreen?.().catch(() => {}); else document.exitFullscreen?.(); };
+  $('#lq-tutup').onclick = tutupLayarQR;
+  try { layar.wake = await navigator.wakeLock?.request('screen'); } catch (e) {}
+  muatQR();
+}
+async function muatQR() {
+  if (!layar.aktif) return;
+  clearTimeout(layar.timer);
+  try {
+    const d = await rpc('hk_qr_ambil', { p_jenis: layar.jenis });
+    if (!layar.aktif) return;
+    S.offset = d.waktu_server - Date.now();
+    $('#lq-qr').innerHTML = svgQR(d.isi);
+    const j = $('#lq-jenis'); j.textContent = d.jenis === 'masuk' ? 'ABSEN MASUK' : 'ABSEN PULANG'; j.classList.toggle('pulang', d.jenis === 'pulang');
+    $('#lq-masuk').textContent = d.sudah_masuk; $('#lq-pulang').textContent = d.sudah_pulang;
+    const bar = $('#lq-bar'), sisa = Math.max(0.5, Number(d.sisa_detik));
+    bar.style.transition = 'none'; bar.style.width = (sisa / d.interval * 100) + '%';
+    void bar.offsetWidth;
+    bar.style.transition = `width ${sisa}s linear`; bar.style.width = '0%';
+    layar.timer = setTimeout(muatQR, sisa * 1000 + 250);
+  } catch (e) {
+    if (e.message === 'SESI' || !layar.aktif) return;
+    $('#lq-qr').innerHTML = `<div style="padding:20px"><i class="ph-bold ph-wifi-slash" style="font-size:40px"></i><br>${esc(e.message)}<br><small>Mencoba lagi…</small></div>`;
+    layar.timer = setTimeout(muatQR, 5000);
+  }
+}
+function tutupLayarQR() {
+  layar.aktif = false; clearTimeout(layar.timer);
+  try { layar.wake?.release(); } catch (e) {} layar.wake = null;
+  if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+  const l = $('#lapisan-staf'); if (l) l.innerHTML = '';
+}
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && layar.aktif) {
+    try { layar.wake = await navigator.wakeLock?.request('screen'); } catch (e) {}
+    muatQR();
+  }
+});
+
+/* ---------- Tab: Pengguna (admin) ---------- */
+async function tabPengguna(main) {
+  await pastikanKelas(true);
+  const st = S.staf; st.fPeran = st.fPeran ?? ''; st.fKelas = st.fKelas ?? ''; st.fCari = st.fCari ?? '';
+  main.innerHTML = `<div class="panel">
+    <div class="panel-kepala"><div><h2>Pengguna</h2><p class="muted kecil">Akun baru dan hasil reset memakai kata sandi awal = NISN/username, wajib diganti saat masuk.</p></div>
+      <div class="baris"><button class="btn btn-garis btn-kecil" id="u-impor"><i class="ph-bold ph-upload-simple"></i>Impor Siswa (CSV)</button>
+      <button class="btn btn-gelap btn-kecil" id="u-tambah"><i class="ph-bold ph-plus"></i>Tambah</button></div></div>
+    <div class="filter">
+      <div class="bidang"><label class="label">Peran</label><select class="input input-kecil" id="u-peran"><option value="">Semua</option>${Object.entries(PERAN).map(([k, v]) => `<option value="${k}" ${st.fPeran === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+      <div class="bidang"><label class="label">Kelas</label><select class="input input-kecil" id="u-kelas">${opsiKelas(st.fKelas, true)}</select></div>
+      <div class="bidang" style="flex:1"><label class="label">Cari</label><input class="input input-kecil" id="u-cari" value="${esc(st.fCari)}" placeholder="Nama atau NISN/username"></div>
+    </div></div>
+    <div class="panel" id="u-isi"></div>`;
+  let t;
+  $('#u-peran').onchange = e => { st.fPeran = e.target.value; muatPengguna(); };
+  $('#u-kelas').onchange = e => { st.fKelas = e.target.value; muatPengguna(); };
+  $('#u-cari').oninput = e => { st.fCari = e.target.value; clearTimeout(t); t = setTimeout(muatPengguna, 350); };
+  $('#u-tambah').onclick = () => modalPengguna(null);
+  $('#u-impor').onclick = modalImpor;
+  await muatPengguna();
+}
+async function muatPengguna() {
+  const st = S.staf, isi = $('#u-isi'); if (!isi) return;
+  isi.innerHTML = '<div class="kosong"><i class="ph-bold ph-spinner putar"></i>Memuat…</div>';
+  try {
+    const d = st.pengguna = await rpc('hk_admin_pengguna_daftar', { p_peran: st.fPeran || null, p_kelas_id: st.fKelas ? Number(st.fKelas) : null, p_cari: st.fCari || null });
+    isi.innerHTML = d.length ? `<p class="muted kecil" style="margin-bottom:10px">${d.length} pengguna${d.length >= 1000 ? ' (dibatasi 1000, persempit filter)' : ''}</p>
+      <div class="tabel-wrap"><table><thead><tr><th>NISN / Username</th><th>Nama</th><th>Peran</th><th>Kelas</th><th>Status</th><th></th></tr></thead>
+      <tbody>${d.map(u => `<tr>
+        <td class="tebal">${esc(u.username)}</td><td>${esc(u.nama)}</td><td>${esc(PERAN[u.peran])}</td><td>${esc(u.kelas || '—')}</td>
+        <td>${u.aktif ? '<span class="chip st-hadir">Aktif</span>' : '<span class="chip st-alpa">Nonaktif</span>'}
+            ${u.harus_ganti_password ? '<span class="chip st-belum" title="Masih memakai kata sandi awal">Sandi awal</span>' : ''}
+            ${u.terkunci ? '<span class="chip st-terlambat">Terkunci</span>' : ''}</td>
+        <td style="white-space:nowrap"><button class="btn btn-garis btn-kecil" data-ubah="${u.id}">Ubah</button>
+            <button class="btn btn-garis btn-kecil" data-reset="${u.id}" title="Kembalikan kata sandi ke NISN/username">Reset sandi</button></td></tr>`).join('')}</tbody></table></div>`
+      : '<div class="kosong"><i class="ph ph-users"></i>Tidak ada pengguna yang cocok.</div>';
+    $$('[data-ubah]', isi).forEach(b => b.onclick = () => modalPengguna(d.find(u => String(u.id) === b.dataset.ubah)));
+    $$('[data-reset]', isi).forEach(b => b.onclick = async () => {
+      const u = d.find(x => String(x.id) === b.dataset.reset);
+      if (!confirm(`Reset kata sandi ${u.nama}?\nKata sandi baru = ${u.username} dan wajib diganti saat masuk.`)) return;
+      try { await rpc('hk_admin_reset_password', { p_id: u.id }); toast('Kata sandi direset.'); muatPengguna(); } catch (e) { if (e.message !== 'SESI') toast(e.message, true); }
+    });
+  } catch (e) { if (e.message !== 'SESI') isi.innerHTML = `<div class="galat">${esc(e.message)}</div>`; }
+}
+function modalPengguna(u) {
+  const baru = !u; u = u || { username: '', nama: '', peran: 'siswa', kelas_id: '', aktif: true };
+  const m = bukaModal(baru ? 'Tambah Pengguna' : 'Ubah Pengguna', `<form id="f-user">
+    <div class="galat" id="fu-galat"></div>
+    <div class="grid2">
+      <div class="bidang"><label class="label">Peran</label><select class="input" name="peran">${Object.entries(PERAN).map(([k, v]) => `<option value="${k}" ${u.peran === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+      <div class="bidang"><label class="label" id="fu-lbl-user">NISN</label><input class="input" name="username" value="${esc(u.username)}" required pattern="[A-Za-z0-9._\\-]{3,40}"></div>
+    </div>
+    <div class="bidang"><label class="label">Nama lengkap</label><input class="input" name="nama" value="${esc(u.nama)}" required maxlength="120"></div>
+    <div class="bidang" id="fu-kelas-wrap"><label class="label">Kelas</label><select class="input" name="kelas"><option value="">— Tanpa kelas —</option>${opsiKelas(u.kelas_id, false)}</select></div>
+    <label class="saklar bidang"><input type="checkbox" name="aktif" ${u.aktif ? 'checked' : ''}>Akun aktif</label>
+    ${baru ? '<p class="bantuan" style="margin:-6px 0 12px">Kata sandi awal = NISN/username. Pengguna wajib menggantinya saat pertama masuk.</p>' : ''}
+    <div class="modal-aksi"><button type="button" class="btn btn-garis" data-tutup>Batal</button><button class="btn btn-gelap">Simpan</button></div></form>`);
+  const f = $('#f-user', m);
+  const sinkron = () => { const s = f.peran.value === 'siswa'; $('#fu-kelas-wrap', m).style.display = s ? '' : 'none'; $('#fu-lbl-user', m).textContent = s ? 'NISN' : 'Username'; };
+  f.peran.onchange = sinkron; sinkron();
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const btn = f.querySelector('button:not([data-tutup])'); btn.disabled = true;
+    try {
+      await rpc('hk_admin_pengguna_simpan', { p_id: baru ? null : u.id, p_username: f.username.value, p_nama: f.nama.value, p_peran: f.peran.value,
+        p_kelas_id: f.peran.value === 'siswa' && f.kelas.value ? Number(f.kelas.value) : null, p_aktif: f.aktif.checked });
+      m.remove(); toast('Pengguna tersimpan.'); S.staf.kelas = null; muatPengguna();
+    } catch (err) { if (err.message !== 'SESI') $('#fu-galat', m).textContent = err.message; btn.disabled = false; }
+  };
+}
+
+function parseCSV(teks) {
+  const baris = teks.replace(/^﻿/, '').replace(/\r/g, '').split('\n').filter(b => b.trim());
+  if (!baris.length) return [];
+  const pemisah = baris[0].split(';').length > baris[0].split(',').length ? ';' : (baris[0].includes('\t') ? '\t' : ',');
+  const pecah = b => {
+    const out = []; let cur = '', q = false;
+    for (let i = 0; i < b.length; i++) {
+      const ch = b[i];
+      if (q) { if (ch === '"') { if (b[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === pemisah) { out.push(cur); cur = ''; }
+      else cur += ch;
+    }
+    out.push(cur); return out.map(s => s.trim());
+  };
+  let rows = baris.map(pecah);
+  if (/nisn|username/i.test(rows[0][0] || '')) rows = rows.slice(1);
+  return rows.filter(r => r[0] && r[1]).map(r => ({ nisn: r[0], nama: r[1], kelas: r[2] || '' }));
+}
+function modalImpor() {
+  const m = bukaModal('Impor Siswa dari CSV', `
+    <div class="banner info"><i class="ph-bold ph-info"></i><span>Format kolom: <b>nisn, nama, kelas</b> (pemisah koma atau titik koma). Kelas yang belum ada dibuat otomatis. NISN yang sudah ada akan diperbarui nama & kelasnya.</span></div>
+    <div class="banner warn"><i class="ph-bold ph-warning"></i><span>Di Excel, format kolom NISN sebagai <b>Teks</b> agar angka 0 di depan tidak hilang.</span></div>
+    <div class="baris" style="margin-bottom:12px"><input type="file" accept=".csv,text/csv,.txt" id="im-file" class="input input-kecil" style="flex:1">
+      <button class="btn btn-garis btn-kecil" id="im-templat"><i class="ph-bold ph-file-csv"></i>Unduh templat</button></div>
+    <div class="bidang"><label class="label">Atau tempel isi CSV di sini</label><textarea class="input" id="im-teks" rows="7" placeholder="nisn,nama,kelas&#10;0012345678,Budi Santoso,X-1"></textarea></div>
+    <p class="muted kecil" id="im-pratinjau">0 baris siap diimpor.</p>
+    <div id="im-hasil"></div>
+    <div class="modal-aksi"><button class="btn btn-garis" data-tutup>Tutup</button><button class="btn btn-gelap" id="im-kirim" disabled>Impor</button></div>`, true);
+  let data = [];
+  const segar = () => { data = parseCSV($('#im-teks', m).value); $('#im-pratinjau', m).textContent = `${data.length} baris siap diimpor.`; $('#im-kirim', m).disabled = !data.length; };
+  $('#im-teks', m).oninput = segar;
+  $('#im-file', m).onchange = async e => { const f = e.target.files[0]; if (f) { $('#im-teks', m).value = await f.text(); segar(); } };
+  $('#im-templat', m).onclick = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿nisn,nama,kelas\r\n0012345678,Contoh Nama Siswa,X-1\r\n'], { type: 'text/csv' }));
+    a.download = 'templat_impor_siswa.csv'; document.body.appendChild(a); a.click(); a.remove();
+  };
+  $('#im-kirim', m).onclick = async () => {
+    const btn = $('#im-kirim', m); btn.disabled = true; btn.innerHTML = '<i class="ph-bold ph-spinner putar"></i> Mengimpor…';
+    try {
+      const r = await rpc('hk_admin_impor_siswa', { p_data: data });
+      $('#im-hasil', m).innerHTML = `<div class="banner info"><i class="ph-bold ph-check-circle"></i><span>${r.baru} siswa baru, ${r.diperbarui} diperbarui, ${r.kelas_baru} kelas baru, ${r.dilewati} dilewati.${(r.catatan || []).length ? '<br>' + r.catatan.map(esc).join('<br>') : ''}</span></div>`;
+      S.staf.kelas = null; await pastikanKelas(true); muatPengguna();
+      btn.innerHTML = 'Selesai';
+    } catch (e) { if (e.message !== 'SESI') $('#im-hasil', m).innerHTML = `<div class="galat">${esc(e.message)}</div>`; btn.disabled = false; btn.innerHTML = 'Impor'; }
+  };
+}
+
+/* ---------- Tab: Kelas (admin) ---------- */
+async function tabKelas(main) {
+  const kelas = await pastikanKelas(true);
+  main.innerHTML = `<div class="panel">
+    <div class="panel-kepala"><div><h2>Kelas & Wali Kelas</h2><p class="muted kecil">Wali kelas hanya dapat melihat dan mencatat kehadiran kelas perwaliannya.</p></div>
+      <button class="btn btn-gelap btn-kecil" id="k-tambah"><i class="ph-bold ph-plus"></i>Tambah Kelas</button></div>
+    ${kelas.length ? `<div class="tabel-wrap"><table><thead><tr><th>Kelas</th><th>Wali Kelas</th><th class="angka">Siswa Aktif</th><th></th></tr></thead>
+      <tbody>${kelas.map(k => `<tr><td class="tebal">${esc(k.nama)}</td><td>${k.wali_nama ? esc(k.wali_nama) : '<span class="muted">Belum ditetapkan</span>'}</td><td class="angka">${k.jumlah_siswa}</td>
+        <td style="white-space:nowrap;text-align:right"><button class="btn btn-garis btn-kecil" data-ubah="${k.id}">Ubah</button> <button class="btn btn-bahaya btn-kecil" data-hapus="${k.id}">Hapus</button></td></tr>`).join('')}</tbody></table></div>`
+      : '<div class="kosong"><i class="ph ph-chalkboard"></i>Belum ada kelas. Tambahkan manual atau lewat Impor Siswa di menu Pengguna.</div>'}
+  </div>`;
+  $('#k-tambah').onclick = () => modalKelas(null);
+  $$('[data-ubah]', main).forEach(b => b.onclick = () => modalKelas(kelas.find(k => String(k.id) === b.dataset.ubah)));
+  $$('[data-hapus]', main).forEach(b => b.onclick = async () => {
+    const k = kelas.find(x => String(x.id) === b.dataset.hapus);
+    if (!confirm(`Hapus kelas ${k.nama}?\n${k.jumlah_siswa} siswa di kelas ini akan menjadi "tanpa kelas" (data absensi tetap tersimpan).`)) return;
+    try { await rpc('hk_admin_kelas_hapus', { p_id: k.id }); toast('Kelas dihapus.'); tampilTabStaf(); } catch (e) { if (e.message !== 'SESI') toast(e.message, true); }
+  });
+}
+async function modalKelas(k) {
+  let wali = [];
+  try { wali = await rpc('hk_admin_pengguna_daftar', { p_peran: 'wali', p_kelas_id: null, p_cari: null }); } catch (e) { if (e.message === 'SESI') return; }
+  const m = bukaModal(k ? 'Ubah Kelas' : 'Tambah Kelas', `<form id="f-kelas">
+    <div class="galat" id="fk-galat"></div>
+    <div class="bidang"><label class="label">Nama kelas</label><input class="input" name="nama" value="${esc(k?.nama || '')}" required maxlength="40" placeholder="Contoh: X-1, XI IPA 2"></div>
+    <div class="bidang"><label class="label">Wali kelas</label><select class="input" name="wali"><option value="">— Belum ditetapkan —</option>
+      ${wali.filter(w => w.aktif).map(w => `<option value="${w.id}" ${k && String(k.wali_id) === String(w.id) ? 'selected' : ''}>${esc(w.nama)} (${esc(w.username)})</option>`).join('')}</select>
+      <p class="bantuan">Daftar berisi pengguna berperan "Wali Kelas". Buat akunnya dulu di menu Pengguna.</p></div>
+    <div class="modal-aksi"><button type="button" class="btn btn-garis" data-tutup>Batal</button><button class="btn btn-gelap">Simpan</button></div></form>`);
+  const f = $('#f-kelas', m);
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const btn = f.querySelector('button:not([data-tutup])'); btn.disabled = true;
+    try { await rpc('hk_admin_kelas_simpan', { p_id: k ? k.id : null, p_nama: f.nama.value, p_wali_id: f.wali.value ? Number(f.wali.value) : null }); m.remove(); toast('Kelas tersimpan.'); tampilTabStaf(); }
+    catch (err) { if (err.message !== 'SESI') $('#fk-galat', m).textContent = err.message; btn.disabled = false; }
+  };
+}
+
+/* ---------- Tab: Pengaturan (admin) ---------- */
+async function tabPengaturan(main) {
+  const d = await rpc('hk_admin_pengaturan');
+  const c = d.pengaturan, jam = v => (v || '').slice(0, 5);
+  const HARI = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+  const ZONA = [['Asia/Jakarta', 'WIB'], ['Asia/Makassar', 'WITA'], ['Asia/Jayapura', 'WIT']];
+  main.innerHTML = `<form class="panel" id="f-atur">
+    <div class="panel-kepala"><div><h2>Pengaturan Absensi</h2><p class="muted kecil">Semua aturan ini diterapkan oleh server saat siswa memindai QR.</p></div>
+      <button class="btn btn-gelap" id="a-simpan"><i class="ph-bold ph-floppy-disk"></i>Simpan</button></div>
+    <div class="galat" id="a-galat"></div>
+    <div class="grid2">
+      <div class="bidang"><label class="label">Nama madrasah</label><input class="input" name="nama_madrasah" value="${esc(c.nama_madrasah)}" required></div>
+      <div class="bidang"><label class="label">Zona waktu</label><select class="input" name="zona_waktu">${ZONA.map(([z, l]) => `<option value="${z}" data-label="${l}" ${c.zona_waktu === z ? 'selected' : ''}>${l} (${z})</option>`).join('')}</select></div>
+    </div>
+    <div class="seksi-form"><h3>Jam Masuk</h3>
+      <div class="grid3">
+        <div class="bidang"><label class="label">Absen masuk dibuka</label><input type="time" class="input" name="jam_buka_masuk" value="${jam(c.jam_buka_masuk)}" required></div>
+        <div class="bidang"><label class="label">Batas tepat waktu</label><input type="time" class="input" name="jam_masuk" value="${jam(c.jam_masuk)}" required></div>
+        <div class="bidang"><label class="label">Toleransi (menit)</label><input type="number" min="0" max="120" class="input" name="toleransi_menit" value="${c.toleransi_menit}" required></div>
+        <div class="bidang"><label class="label">Absen masuk ditutup</label><input type="time" class="input" name="jam_tutup_masuk" value="${jam(c.jam_tutup_masuk)}" required>
+          <p class="bantuan">Setelah jam ini, siswa yang belum absen dihitung alpa (kecuali dicatat izin/sakit).</p></div>
+      </div></div>
+    <div class="seksi-form"><h3>Jam Pulang</h3>
+      <div class="grid3">
+        <div class="bidang"><label class="label">Absen pulang dibuka</label><input type="time" class="input" name="jam_pulang_min" value="${jam(c.jam_pulang_min)}" required></div>
+        <div class="bidang"><label class="label">Dibuka khusus Jumat</label><input type="time" class="input" name="jam_pulang_jumat" value="${jam(c.jam_pulang_jumat)}"><p class="bantuan">Kosongkan bila sama dengan hari lain.</p></div>
+        <div class="bidang"><label class="label">Absen pulang ditutup</label><input type="time" class="input" name="jam_tutup_pulang" value="${jam(c.jam_tutup_pulang)}" required></div>
+      </div></div>
+    <div class="seksi-form"><h3>Hari Sekolah</h3>
+      <div class="cek-hari bidang">${HARI.map((h, i) => `<label><input type="checkbox" name="hari" value="${i + 1}" ${c.hari_sekolah.includes(i + 1) ? 'checked' : ''}>${h}</label>`).join('')}</div>
+      <div class="bidang" style="max-width:260px"><label class="label">Mulai digunakan sejak</label><input type="date" class="input" name="tanggal_mulai" value="${c.tanggal_mulai}" required>
+        <p class="bantuan">Alpa tidak dihitung sebelum tanggal ini.</p></div></div>
+    <div class="seksi-form"><h3>Lokasi Madrasah (Geofence)</h3>
+      <label class="saklar bidang"><input type="checkbox" name="wajib_lokasi" ${c.wajib_lokasi ? 'checked' : ''}>Wajib berada di area madrasah saat absen</label>
+      <div class="grid3">
+        <div class="bidang"><label class="label">Latitude</label><input class="input" name="lat" value="${c.lat ?? ''}" inputmode="decimal" placeholder="0.xxxxxx"></div>
+        <div class="bidang"><label class="label">Longitude</label><input class="input" name="lng" value="${c.lng ?? ''}" inputmode="decimal" placeholder="122.xxxxxx"></div>
+        <div class="bidang"><label class="label">Radius (meter)</label><input type="number" min="30" max="2000" class="input" name="radius_m" value="${c.radius_m}" required></div>
+      </div>
+      <div class="baris"><button type="button" class="btn btn-garis btn-kecil" id="a-lokasi"><i class="ph-bold ph-crosshair"></i>Gunakan lokasi saya sekarang</button>
+        <a class="btn btn-garis btn-kecil" id="a-peta" target="_blank" rel="noopener"><i class="ph-bold ph-map-trifold"></i>Cek di peta</a>
+        <span class="muted kecil" id="a-lok-info"></span></div>
+      <p class="bantuan">Lakukan "Gunakan lokasi saya" saat berada di tengah halaman madrasah. Server hanya menyimpan status dalam/luar radius, bukan koordinat siswa.</p></div>
+    <div class="seksi-form"><h3>QR Dinamis</h3>
+      <div class="bidang" style="max-width:260px"><label class="label">QR berganti setiap (detik)</label><input type="number" min="15" max="120" class="input" name="qr_interval_detik" value="${c.qr_interval_detik}" required>
+        <p class="bantuan">Disarankan 30 detik. QR sebelumnya masih diterima satu putaran untuk memberi jeda sinyal.</p></div></div>
+  </form>
+  <div class="panel"><h3>Hari Libur</h3>
+    <form class="filter" id="f-libur" style="margin-bottom:14px">
+      <div class="bidang"><label class="label">Tanggal</label><input type="date" class="input input-kecil" name="tgl" required></div>
+      <div class="bidang" style="flex:1"><label class="label">Keterangan</label><input class="input input-kecil" name="ket" required maxlength="100" placeholder="Contoh: Libur Maulid Nabi"></div>
+      <button class="btn btn-gelap btn-kecil" style="height:40px"><i class="ph-bold ph-plus"></i>Tambah</button></form>
+    ${d.libur.length ? `<div class="tabel-wrap"><table><thead><tr><th>Tanggal</th><th>Keterangan</th><th></th></tr></thead><tbody>
+      ${d.libur.map(l => `<tr><td>${fmtTglSedang(l.tanggal)}</td><td>${esc(l.keterangan)}</td><td style="text-align:right"><button class="btn btn-bahaya btn-kecil" data-hapus-libur="${l.tanggal}">Hapus</button></td></tr>`).join('')}
+      </tbody></table></div>` : '<p class="muted kecil">Belum ada hari libur tercatat.</p>'}
+  </div>`;
+
+  const f = $('#f-atur');
+  const segarPeta = () => { const a = $('#a-peta'); if (f.lat.value && f.lng.value) { a.href = `https://www.google.com/maps?q=${encodeURIComponent(f.lat.value)},${encodeURIComponent(f.lng.value)}`; a.style.display = ''; } else a.style.display = 'none'; };
+  f.lat.oninput = f.lng.oninput = segarPeta; segarPeta();
+  $('#a-lokasi').onclick = async () => {
+    const info = $('#a-lok-info'); info.textContent = 'Membaca lokasi…';
+    const l = await ambilLokasi();
+    if (!l.ok) { info.textContent = 'Gagal: ' + l.alasan; return; }
+    f.lat.value = l.lat.toFixed(6); f.lng.value = l.lng.toFixed(6); segarPeta();
+    info.textContent = `Terisi (akurasi ±${l.akurasi} m). Jangan lupa Simpan.`;
+  };
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const btn = $('#a-simpan'); btn.disabled = true; $('#a-galat').textContent = '';
+    const opsiZona = f.zona_waktu.selectedOptions[0];
+    const data = {
+      nama_madrasah: f.nama_madrasah.value, zona_waktu: f.zona_waktu.value, label_zona: opsiZona.dataset.label,
+      jam_buka_masuk: f.jam_buka_masuk.value, jam_masuk: f.jam_masuk.value, toleransi_menit: f.toleransi_menit.value,
+      jam_tutup_masuk: f.jam_tutup_masuk.value, jam_pulang_min: f.jam_pulang_min.value, jam_pulang_jumat: f.jam_pulang_jumat.value,
+      jam_tutup_pulang: f.jam_tutup_pulang.value,
+      hari_sekolah: $$('input[name=hari]:checked', f).map(x => Number(x.value)),
+      tanggal_mulai: f.tanggal_mulai.value, wajib_lokasi: f.wajib_lokasi.checked,
+      lat: f.lat.value.trim().replace(',', '.'), lng: f.lng.value.trim().replace(',', '.'),
+      radius_m: f.radius_m.value, qr_interval_detik: f.qr_interval_detik.value,
+    };
+    try { await rpc('hk_admin_pengaturan_simpan', { p_data: data }); await muatBeranda(); toast('Pengaturan tersimpan.'); }
+    catch (err) { if (err.message !== 'SESI') { $('#a-galat').textContent = err.message; window.scrollTo({ top: 0, behavior: 'smooth' }); } }
+    btn.disabled = false;
+  };
+  $('#f-libur').onsubmit = async e => {
+    e.preventDefault(); const fl = e.target;
+    try { await rpc('hk_admin_libur_simpan', { p_tanggal: fl.tgl.value, p_keterangan: fl.ket.value }); toast('Hari libur ditambahkan.'); tampilTabStaf(); }
+    catch (err) { if (err.message !== 'SESI') toast(err.message, true); }
+  };
+  $$('[data-hapus-libur]').forEach(b => b.onclick = async () => {
+    if (!confirm('Hapus hari libur ini?')) return;
+    try { await rpc('hk_admin_libur_hapus', { p_tanggal: b.dataset.hapusLibur }); toast('Hari libur dihapus.'); tampilTabStaf(); }
+    catch (err) { if (err.message !== 'SESI') toast(err.message, true); }
+  });
+}
+
+/* ---------- Tab: Akun ---------- */
+async function tabAkun(main) {
+  const p = S.profil;
+  main.innerHTML = `<div class="panel" style="max-width:520px">
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:16px"><div class="avatar besar">${esc(inisial(p.nama))}</div>
+      <div><h2>${esc(p.nama)}</h2><p class="muted">${esc(PERAN[p.peran])} · ${esc(p.username)}</p></div></div>
+    ${p.peran === 'wali' ? `<div class="daftar-info"><div><span>Kelas perwalian</span><b>${p.kelas_wali.length ? p.kelas_wali.map(k => esc(k.nama)).join(', ') : '—'}</b></div></div>` : ''}
+    <div class="baris"><button class="btn btn-garis" id="ak-sandi"><i class="ph-bold ph-lock-key"></i>Ganti Kata Sandi</button>
+      <button class="btn btn-bahaya" id="ak-keluar"><i class="ph-bold ph-sign-out"></i>Keluar</button></div>
+  </div>`;
+  $('#ak-sandi').onclick = modalGantiSandi;
+  $('#ak-keluar').onclick = () => { if (confirm('Keluar dari HadirKuy?')) keluar(); };
+}
+
+mulai();
+</script>
+</body>
+</html>
